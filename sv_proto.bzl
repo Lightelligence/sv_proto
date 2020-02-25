@@ -17,3 +17,14 @@ def sv_proto_library(name, srcs):
             "@com_google_protobuf//:protoc",
         ],
     )
+    # load("@com_google_protobuf//:protobuf.bzl", "proto_gen")
+    # proto_gen(
+    #     name = name,
+    #     srcs = srcs,
+    #     plugin = plugin,
+    #     protoc = "@com_google_protobuf//:protoc",
+    #     plugin_language = "sv",
+    #     outs = [f + ".sv" for f in srcs],
+    #     gen_cc = False,
+    #     gen_py = False,
+    # )
