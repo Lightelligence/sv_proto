@@ -1,5 +1,8 @@
 syntax = "proto2";
 
+// This example is intended to test creation of messages inside a SystemVerilog
+// package
+
 package example;
 
 message Hello {
