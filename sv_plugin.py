@@ -94,9 +94,10 @@ class GeneratedPackage():
         if self._package_name:
             self.append(f"package {self._package_name};")
             self.append("")
-            self.append("  `include \"uvm_macros.svh\"")
-            self.append("  import uvm_pkg::*;")
-            self.append("")
+            
+        self.append("  `include \"uvm_macros.svh\"")
+        self.append("  import uvm_pkg::*;")
+        self.append("")
 
     def append(self, line):
         self._lines.append(line)

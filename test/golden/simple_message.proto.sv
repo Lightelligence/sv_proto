@@ -1,3 +1,6 @@
+  `include "uvm_macros.svh"
+  import uvm_pkg::*;
+
   class Hello extends uvm_object;
 
     string name;

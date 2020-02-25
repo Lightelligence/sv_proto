@@ -9,7 +9,7 @@ def golden_test(name):
     )
 
     native.sh_test(
-        name = "{}_test".format(name),
+        name = "{}_gold_test".format(name),
         size = "small",
         srcs = ["passthrough.sh"],
         data = [
@@ -17,6 +17,16 @@ def golden_test(name):
             "golden/{}.proto.sv".format(name),
         ],
         args = ["diff $(location :{name}) $(location golden/{name}.proto.sv)".format(name=name)],
+        tags = ["gold"],
+    )
+
+    native.sh_test(
+        name = "{}_compile_test".format(name),
+        size = "small",
+        srcs = ["passthrough.sh"],
+        data = [":{}".format(name)],
+        args = ["xrun -uvm $(location :{name})".format(name=name)],
+        tags = ["xrun"],
     )
 
 def golden_test_glob(proto_files):

@@ -1,0 +1,3 @@
+# Required for xcelium
+test --action_env=HOME
+test --action_env=LM_LICENSE_FILE
