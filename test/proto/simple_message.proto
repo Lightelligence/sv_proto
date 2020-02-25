@@ -1,7 +1,0 @@
-syntax = "proto2";
-
-// This example is intended to test a single message with native types
-
-message Hello {
-  required string name = 1;
-}
