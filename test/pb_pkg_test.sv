@@ -46,11 +46,21 @@ function automatic void test_message_key_encode_decode();
    assert (wire_type == 2) else $display("wire_type: %0d", wire_type);
 endfunction : test_message_key_encode_decode
 
+function automatic void test_decode_string();
+   bytestream_t stream = '{8'h07, 8'h74, 8'h65, 8'h73, 8'h74, 8'h69, 8'h6e, 8'h67};
+   cursor_t cursor = 0;
+   string result;
+   bit    failure = decode_type_string(result, stream, cursor);
+   assert (failure == 0);
+   assert (result == "testing") else $display("result: %s", result);
+endfunction : test_decode_string
+
 module tb_top;
    initial begin
       test_varint_decode_single_byte();
       test_varint_decode_300();
       test_varint_encode();
       test_message_key_encode_decode();
+      test_decode_string();
    end
 endmodule : tb_top

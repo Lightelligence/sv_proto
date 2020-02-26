@@ -47,6 +47,7 @@ package pb_pkg;
          new_bytes.push_back(current);
       end 
       while (_varint);
+      // TODO: performance
       // This might be too expensive to continuously reallocate
       // Might need to do some larger preallocation and then check size
       _stream = new[_stream.size() + new_bytes.size()](_stream);
@@ -77,5 +78,24 @@ package pb_pkg;
       varint_t varint = (_field_number << 3) | _wire_type;
       return encode_varint(._varint(varint), ._stream(_stream), ._cursor(_cursor));
    endfunction : encode_message_key
+
+
+   // https://developers.google.com/protocol-buffers/docs/encoding#strings
+   function automatic bit decode_type_string(output string result,
+                                             ref bytestream_t _stream,
+                                             ref cursor_t _cursor);
+      varint_t str_length;
+      bit retval = 0;
+      retval |= decode_varint(._varint(str_length), ._stream(_stream), ._cursor(_cursor));
+      while (str_length) begin
+         byte current = _stream[_cursor++];
+         string current_str = string'(current);
+         // TODO: performance
+         // More efficient way to build up the string?
+         result = {result, current_str};
+         str_length--;
+      end
+      return 0;
+   endfunction : decode_type_string
 
 endpackage : pb_pkg
