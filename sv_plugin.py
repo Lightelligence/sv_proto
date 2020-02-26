@@ -39,7 +39,7 @@ PB_TYPE_NUMBER_TO_SV_TYPE = {
     14 : 'enum'             , # TYPE_ENUM # FIXME
     # 7  : ''               , # TYPE_FIXED32
     # 6  : ''               , # TYPE_FIXED64
-    2  : 'real'             , # TYPE_FLOAT
+    2  : 'shortreal'        , # TYPE_FLOAT
     # 10 : ''               , # TYPE_GROUP
     5  : 'int'              , # TYPE_INT32
     3  : 'longint'          , # TYPE_INT64
@@ -186,6 +186,23 @@ def generate_code(request, response):
                 pkg.append(f"    function new(string name=\"{item.name}\");")
                 pkg.append("       super.new(.name(name));")
                 pkg.append("    endfunction : new")
+                pkg.append("")
+                pkg.append("    function void deserialize(ref pb_pkg::bytestream_t _stream, ref pb_pkg::cursor_t _cursor, ref pb_pkg::cursor_t _cursor_stop);")
+                pkg.append("      pb_pkg::cursor_t stream_size = _stream.size();")
+                pkg.append("      while ((_cursor < stream_size) && (_cursor < _cursor_stop)) begin")
+                pkg.append("        pb_pkg::field_number_t field_number;")
+                pkg.append("        pb_pkg::wire_type_t wire_type;")
+                pkg.append("        assert (!pb_pkg::decode_message_key(._field_number(field_number),")
+                pkg.append("                                            ._wire_type(field_number),")
+                pkg.append("                                            ._stream(_stream),")
+                pkg.append("                                            ._cursor(_cursor)));")
+                pkg.append("        case (field_number)")
+                for f in item.field:
+                    pkg.append(f"          {f.number}: assert (!pb_pkg::decode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._result({f.name}), ._stream(_stream), ._cursor(_cursor)));")
+                pkg.append("          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor)));")
+                pkg.append("        endcase")
+                pkg.append("      end")
+                pkg.append("    endfunction : deserialize")
                 pkg.append("")
                 pkg.append(f"  endclass : {item.name}")
                 pkg.append("")

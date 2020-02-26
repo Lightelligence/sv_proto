@@ -81,7 +81,7 @@ package pb_pkg;
 
 
    // https://developers.google.com/protocol-buffers/docs/encoding#strings
-   function automatic bit decode_type_string(output string result,
+   function automatic bit decode_type_string(output string _result,
                                              ref bytestream_t _stream,
                                              ref cursor_t _cursor);
       varint_t str_length;
@@ -92,41 +92,41 @@ package pb_pkg;
          string current_str = string'(current);
          // TODO: performance
          // More efficient way to build up the string?
-         result = {result, current_str};
+         _result = {_result, current_str};
          str_length--;
       end
       return 0;
    endfunction : decode_type_string
 
-   function automatic bit decode_int32(output int _result,
+   function automatic bit decode_type_int32(output int _result,
                                        ref bytestream_t _stream,
                                        ref cursor_t _cursor);
       // TODO
       // Need to cast from longint unsigned to int?
       return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
-   endfunction : decode_int32
+   endfunction : decode_type_int32
 
-   function automatic bit decode_int64(output longint _result,
+   function automatic bit decode_type_int64(output longint _result,
                                        ref bytestream_t _stream,
                                        ref cursor_t _cursor);
       // TODO
       // Need to cast from longint unsigned to longint?
       return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
-   endfunction : decode_int64
+   endfunction : decode_type_int64
 
-   function automatic bit decode_uint32(output int unsigned _result,
+   function automatic bit decode_type_uint32(output int unsigned _result,
                                        ref bytestream_t _stream,
                                        ref cursor_t _cursor);
       // TODO
       // Need to cast from longint unsigned to int unsigned?
       return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
-   endfunction : decode_uint32
+   endfunction : decode_type_uint32
 
-   function automatic bit decode_uint64(output longint _result,
+   function automatic bit decode_type_uint64(output longint _result,
                                         ref bytestream_t _stream,
                                         ref cursor_t _cursor);
       return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
-   endfunction : decode_uint64
+   endfunction : decode_type_uint64
 
    function automatic bit _extract_32_bits(output bit [31:0] _result,
                                           ref bytestream_t _stream,
@@ -146,7 +146,7 @@ package pb_pkg;
       return 0;
    endfunction : _extract_64_bits
 
-   function automatic bit decode_float(output shortreal _result,
+   function automatic bit decode_type_float(output shortreal _result,
                                           ref bytestream_t _stream,
                                           ref cursor_t _cursor);
       bit [31:0] result_bits;
@@ -154,9 +154,9 @@ package pb_pkg;
       retval |= _extract_32_bits(._result(result_bits), ._stream(_stream), ._cursor(_cursor));
       _result = $bitstoshortreal(result_bits);
       return retval;
-   endfunction : decode_float
+   endfunction : decode_type_float
 
-   function automatic bit decode_double(output shortreal _result,
+   function automatic bit decode_type_double(output shortreal _result,
                                         ref bytestream_t _stream,
                                         ref cursor_t _cursor);
       bit [63:0] result_bits;
@@ -164,6 +164,15 @@ package pb_pkg;
       retval |= _extract_64_bits(._result(result_bits), ._stream(_stream), ._cursor(_cursor));
       _result = $bitstoreal(result_bits);
       return retval;
-   endfunction : decode_double
+   endfunction : decode_type_double
+
+   // Consumes an unknown field
+   function automatic bit decode_and_consume_unknown(input wire_type_t _wire_type,
+                                                     ref bytestream_t _stream,
+                                                     ref cursor_t _cursor);
+      // TODO implement
+      return 1;
+   endfunction : decode_and_consume_unknown
+                                                     
    
 endpackage : pb_pkg
