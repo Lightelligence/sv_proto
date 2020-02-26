@@ -8,6 +8,8 @@ package pb_pkg;
 
    typedef longint unsigned varint_t;
    typedef int unsigned     cursor_t;
+   typedef int unsigned     field_number_t;
+   typedef int unsigned     wire_type_t;
 
    localparam MAX_VARINT_BYTES = (64 / 7) + 1; // Sanity check for maximum bytes for a varint
 
@@ -55,8 +57,8 @@ package pb_pkg;
 
 
    // https://developers.google.com/protocol-buffers/docs/encoding#structure
-   function automatic bit decode_message_key(output int unsigned _field_number,
-                                             output int unsigned _wire_type,
+   function automatic bit decode_message_key(output field_number_t _field_number,
+                                             output wire_type_t _wire_type,
                                              ref byte            _stream[],
                                              ref cursor_t _cursor);
       varint_t varint;
@@ -67,8 +69,8 @@ package pb_pkg;
       return retval;
    endfunction : decode_message_key
 
-   function automatic bit encode_message_key(input int unsigned _field_number,
-                                             input int unsigned _wire_type,
+   function automatic bit encode_message_key(input field_number_t _field_number,
+                                             input wire_type_t _wire_type,
                                              ref byte           _stream[],
                                              ref cursor_t _cursor);
       varint_t varint = (_field_number << 3) | _wire_type;

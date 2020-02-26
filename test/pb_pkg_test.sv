@@ -34,8 +34,8 @@ endfunction : test_varint_encode
 function automatic void test_message_key_encode_decode();
    byte stream[] = new[0];
    cursor_t cursor = 0;
-   int unsigned field_number = 12;
-   int unsigned wire_type = 2;
+   field_number_t field_number = 12;
+   wire_type_t wire_type = 2;
    bit failure = encode_message_key(field_number, wire_type, stream, cursor);
    assert (failure == 0);
    cursor = 0;
