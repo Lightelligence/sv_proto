@@ -28,19 +28,19 @@ package pb_pkg;
       return 1; // Fail if loop didn't break
    endfunction : decode_varint
 
-   function automatic bit encode_varint(input longint unsigned varint,
+   function automatic bit encode_varint(input longint unsigned _varint,
                                         ref byte         _stream[],
                                         ref int unsigned _cursor);
       byte new_bytes[$];
       do begin
-         byte current = varint & 8'h7f;
-         varint >>= 7;
-         if (varint) begin
+         byte current = _varint & 8'h7f;
+         _varint >>= 7;
+         if (_varint) begin
             current |= 8'h80;
          end
          new_bytes.push_back(current);
       end 
-      while (varint);
+      while (_varint);
       // This might be too expensive to continuously reallocate
       // Might need to do some larger preallocation and then check size
       _stream = new[_stream.size() + new_bytes.size()](_stream);
@@ -63,5 +63,13 @@ package pb_pkg;
       _wire_type = varint & 3'b111;
       return retval;
    endfunction : decode_message_key
+
+   function automatic bit encode_message_key(input int unsigned _field_number,
+                                             input int unsigned _wire_type,
+                                             ref byte           _stream[],
+                                             ref int unsigned   _cursor);
+      int unsigned varint = (_field_number << 3) | _wire_type;
+      return encode_varint(._varint(varint), ._stream(_stream), ._cursor(_cursor));
+   endfunction : encode_message_key
 
 endpackage : pb_pkg
