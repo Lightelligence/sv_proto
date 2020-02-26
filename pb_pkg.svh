@@ -128,4 +128,42 @@ package pb_pkg;
       return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
    endfunction : decode_uint64
 
+   function automatic bit _extract_32_bits(output bit [31:0] _result,
+                                          ref bytestream_t _stream,
+                                          ref cursor_t _cursor);
+      for (int unsigned ii=0; ii < 32; ii+=8) begin
+         _result |= (_stream[_cursor++] << ii);
+      end
+      return 0;
+   endfunction : _extract_32_bits
+
+   function automatic bit _extract_64_bits(output bit [63:0] _result,
+                                          ref bytestream_t _stream,
+                                          ref cursor_t _cursor);
+      for (int unsigned ii=0; ii < 64; ii+=8) begin
+         _result |= (_stream[_cursor++] << ii);
+      end
+      return 0;
+   endfunction : _extract_64_bits
+
+   function automatic bit decode_float(output shortreal _result,
+                                          ref bytestream_t _stream,
+                                          ref cursor_t _cursor);
+      bit [31:0] result_bits;
+      bit        retval = 0;
+      retval |= _extract_32_bits(._result(result_bits), ._stream(_stream), ._cursor(_cursor));
+      _result = $bitstoshortreal(result_bits);
+      return retval;
+   endfunction : decode_float
+
+   function automatic bit decode_double(output shortreal _result,
+                                        ref bytestream_t _stream,
+                                        ref cursor_t _cursor);
+      bit [63:0] result_bits;
+      bit        retval = 0;
+      retval |= _extract_64_bits(._result(result_bits), ._stream(_stream), ._cursor(_cursor));
+      _result = $bitstoreal(result_bits);
+      return retval;
+   endfunction : decode_double
+   
 endpackage : pb_pkg
