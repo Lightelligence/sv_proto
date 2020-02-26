@@ -98,4 +98,34 @@ package pb_pkg;
       return 0;
    endfunction : decode_type_string
 
+   function automatic bit decode_int32(output int _result,
+                                       ref bytestream_t _stream,
+                                       ref cursor_t _cursor);
+      // TODO
+      // Need to cast from longint unsigned to int?
+      return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
+   endfunction : decode_int32
+
+   function automatic bit decode_int64(output longint _result,
+                                       ref bytestream_t _stream,
+                                       ref cursor_t _cursor);
+      // TODO
+      // Need to cast from longint unsigned to longint?
+      return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
+   endfunction : decode_int64
+
+   function automatic bit decode_uint32(output int unsigned _result,
+                                       ref bytestream_t _stream,
+                                       ref cursor_t _cursor);
+      // TODO
+      // Need to cast from longint unsigned to int unsigned?
+      return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
+   endfunction : decode_uint32
+
+   function automatic bit decode_uint64(output longint _result,
+                                        ref bytestream_t _stream,
+                                        ref cursor_t _cursor);
+      return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
+   endfunction : decode_uint64
+
 endpackage : pb_pkg
