@@ -6,15 +6,18 @@ Encoding documentation:
 
 package pb_pkg;
 
+   typedef longint unsigned varint_t;
+   typedef int unsigned     cursor_t;
+
    localparam MAX_VARINT_BYTES = (64 / 7) + 1; // Sanity check for maximum bytes for a varint
 
    // Given a byte stream, start at _position cursor and extract a varint
    // _stream is not modified, passed as ref for performance
    // _cursor is advanced to next unconsumed byte in stream
    // https://developers.google.com/protocol-buffers/docs/encoding#varints
-   function automatic bit decode_varint(output longint unsigned _varint,
-                                        ref byte         _stream[],
-                                        ref int unsigned _cursor);
+   function automatic bit decode_varint(output varint_t _varint,
+                                        ref byte _stream[],
+                                        ref cursor_t _cursor);
       int bit_counter = 0;
       _varint = 0;
       for (int unsigned ii=0; ii < MAX_VARINT_BYTES; ii++) begin
@@ -28,9 +31,9 @@ package pb_pkg;
       return 1; // Fail if loop didn't break
    endfunction : decode_varint
 
-   function automatic bit encode_varint(input longint unsigned _varint,
-                                        ref byte         _stream[],
-                                        ref int unsigned _cursor);
+   function automatic bit encode_varint(input varint_t _varint,
+                                        ref byte _stream[],
+                                        ref cursor_t _cursor);
       byte new_bytes[$];
       do begin
          byte current = _varint & 8'h7f;
@@ -55,8 +58,8 @@ package pb_pkg;
    function automatic bit decode_message_key(output int unsigned _field_number,
                                              output int unsigned _wire_type,
                                              ref byte            _stream[],
-                                             ref int unsigned    _cursor);
-      int unsigned varint;
+                                             ref cursor_t _cursor);
+      varint_t varint;
       bit          retval = 0;
       retval = decode_varint(._varint(varint), ._stream(_stream), ._cursor(_cursor));
       _field_number = varint >> 3;
@@ -67,8 +70,8 @@ package pb_pkg;
    function automatic bit encode_message_key(input int unsigned _field_number,
                                              input int unsigned _wire_type,
                                              ref byte           _stream[],
-                                             ref int unsigned   _cursor);
-      int unsigned varint = (_field_number << 3) | _wire_type;
+                                             ref cursor_t _cursor);
+      varint_t varint = (_field_number << 3) | _wire_type;
       return encode_varint(._varint(varint), ._stream(_stream), ._cursor(_cursor));
    endfunction : encode_message_key
 
