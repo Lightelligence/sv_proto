@@ -1,22 +1,34 @@
 // Unit test functions for pb_pkg.svh
 
-function automatic void test_varint_single_byte();
+function automatic void test_varint_decode_single_byte();
    byte stream[] = '{8'b0000_0001};
    int unsigned cursor = 0;
    longint          result;
    bit failure = pb_pkg::decode_varint(result, stream, cursor);
    assert (failure == 0);
    assert (result == 1) else $display("result: %0d", result);
-endfunction : test_varint_single_byte
+endfunction : test_varint_decode_single_byte
 
-function automatic void test_varint_300();
+function automatic void test_varint_decode_300();
    byte    stream[] = '{8'b1010_1100, 8'b0000_0010};
    int unsigned cursor = 0;
    longint          result;
    bit failure = pb_pkg::decode_varint(result, stream, cursor);
    assert (failure == 0);
    assert (result == 300) else $display("result: %0d", result);
-endfunction : test_varint_300
+endfunction : test_varint_decode_300
+
+function automatic void test_varint_encode();
+   byte stream[] = new[2];
+   int unsigned cursor = 0;
+   longint          result;
+   bit failure = pb_pkg::encode_varint(223, stream, cursor);
+   assert (failure == 0);
+   cursor = 0;
+   failure = pb_pkg::decode_varint(result, stream, cursor);
+   assert (failure == 0);
+   assert (result == 223) else $display("result: %0d", result);
+endfunction : test_varint_encode
 
 function automatic void test_message_key();
    byte stream[] = '{8'b0000_1000};
@@ -30,8 +42,9 @@ endfunction : test_message_key
 
 module tb_top;
    initial begin
-      test_varint_single_byte();
-      test_varint_300();
+      test_varint_decode_single_byte();
+      test_varint_decode_300();
+      test_varint_encode();
       test_message_key();
    end
 endmodule : tb_top

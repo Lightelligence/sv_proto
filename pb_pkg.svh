@@ -25,12 +25,35 @@ package pb_pkg;
          end
          bit_counter+=7;
       end
-      return 1;
+      return 1; // Fail if loop didn't break
    endfunction : decode_varint
+
+   function automatic bit encode_varint(input longint unsigned varint,
+                                        ref byte         _stream[],
+                                        ref int unsigned _cursor);
+      byte new_bytes[$];
+      do begin
+         byte current = varint & 8'h7f;
+         varint >>= 7;
+         if (varint) begin
+            current |= 8'h80;
+         end
+         new_bytes.push_back(current);
+      end 
+      while (varint);
+      // This might be too expensive to continuously reallocate
+      // Might need to do some larger preallocation and then check size
+      _stream = new[_stream.size() + new_bytes.size()](_stream);
+      foreach(new_bytes[ii]) begin
+         _stream[_cursor++] = new_bytes[ii];
+      end
+      return 0;
+   endfunction : encode_varint
+
 
    // https://developers.google.com/protocol-buffers/docs/encoding#structure
    function automatic bit decode_message_key(output int unsigned _field_number,
-                                             output int unsigned _wire_type
+                                             output int unsigned _wire_type,
                                              ref byte            _stream[],
                                              ref int unsigned    _cursor);
       int unsigned varint;
