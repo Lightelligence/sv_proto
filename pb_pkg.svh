@@ -6,8 +6,9 @@ Encoding documentation:
 
 package pb_pkg;
 
-   typedef longint unsigned varint_t;
+   typedef byte             bytestream_t[];
    typedef int unsigned     cursor_t;
+   typedef longint unsigned varint_t;
    typedef int unsigned     field_number_t;
    typedef int unsigned     wire_type_t;
 
@@ -18,7 +19,7 @@ package pb_pkg;
    // _cursor is advanced to next unconsumed byte in stream
    // https://developers.google.com/protocol-buffers/docs/encoding#varints
    function automatic bit decode_varint(output varint_t _varint,
-                                        ref byte _stream[],
+                                        ref bytestream_t _stream,
                                         ref cursor_t _cursor);
       int bit_counter = 0;
       _varint = 0;
@@ -34,7 +35,7 @@ package pb_pkg;
    endfunction : decode_varint
 
    function automatic bit encode_varint(input varint_t _varint,
-                                        ref byte _stream[],
+                                        ref bytestream_t _stream,
                                         ref cursor_t _cursor);
       byte new_bytes[$];
       do begin
@@ -59,7 +60,7 @@ package pb_pkg;
    // https://developers.google.com/protocol-buffers/docs/encoding#structure
    function automatic bit decode_message_key(output field_number_t _field_number,
                                              output wire_type_t _wire_type,
-                                             ref byte            _stream[],
+                                             ref bytestream_t _stream,
                                              ref cursor_t _cursor);
       varint_t varint;
       bit          retval = 0;
@@ -71,7 +72,7 @@ package pb_pkg;
 
    function automatic bit encode_message_key(input field_number_t _field_number,
                                              input wire_type_t _wire_type,
-                                             ref byte           _stream[],
+                                             ref bytestream_t _stream,
                                              ref cursor_t _cursor);
       varint_t varint = (_field_number << 3) | _wire_type;
       return encode_varint(._varint(varint), ._stream(_stream), ._cursor(_cursor));

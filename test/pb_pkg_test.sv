@@ -2,7 +2,7 @@
 import pb_pkg::*;
 
 function automatic void test_varint_decode_single_byte();
-   byte stream[] = '{8'b0000_0001};
+   bytestream_t stream = '{8'b0000_0001};
    cursor_t cursor = 0;
    varint_t result;
    bit failure = decode_varint(result, stream, cursor);
@@ -11,7 +11,7 @@ function automatic void test_varint_decode_single_byte();
 endfunction : test_varint_decode_single_byte
 
 function automatic void test_varint_decode_300();
-   byte    stream[] = '{8'b1010_1100, 8'b0000_0010};
+   bytestream_t stream = '{8'b1010_1100, 8'b0000_0010};
    cursor_t cursor = 0;
    varint_t result;
    bit failure = decode_varint(result, stream, cursor);
@@ -20,7 +20,7 @@ function automatic void test_varint_decode_300();
 endfunction : test_varint_decode_300
 
 function automatic void test_varint_encode();
-   byte stream[] = new[2];
+   bytestream_t stream = new[2];
    cursor_t cursor = 0;
    varint_t result;
    bit failure = encode_varint(223, stream, cursor);
@@ -32,7 +32,7 @@ function automatic void test_varint_encode();
 endfunction : test_varint_encode
 
 function automatic void test_message_key_encode_decode();
-   byte stream[] = new[0];
+   bytestream_t stream = new[0];
    cursor_t cursor = 0;
    field_number_t field_number = 12;
    wire_type_t wire_type = 2;
