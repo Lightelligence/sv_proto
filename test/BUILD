@@ -11,6 +11,6 @@ sh_test(
         "//:pb_pkg.svh",
         "pb_pkg_test.sv",
     ],
-    args = ["xrun -uvm $(location //:pb_pkg.svh) $(location pb_pkg_test.sv)"],
+    args = ["xrun -licqueue -uvm $(location //:pb_pkg.svh) $(location pb_pkg_test.sv)"],
     tags = ["xrun"],
 )
