@@ -4,4 +4,7 @@ py_binary(
     visibility = ["//visibility:public"],
 )
 
-exports_files(["sv_plugin.py"])
+exports_files([
+    "sv_plugin.py",
+    "pb_pkg.svh",
+])
