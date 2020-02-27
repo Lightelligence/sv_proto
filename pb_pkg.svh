@@ -1,5 +1,5 @@
 /* Base functionality for protobuffer based SystemVerilog classes
- 
+
 Encoding documentation:
   https://developers.google.com/protocol-buffers/docs/encoding#simple
 */
@@ -25,7 +25,7 @@ package pb_pkg;
    // _cursor is advanced to next unconsumed byte in stream
    // https://developers.google.com/protocol-buffers/docs/encoding#varints
    function automatic bit decode_varint(output varint_t _varint,
-                                        ref bytestream_t _stream,
+                                         ref bytestream_t _stream,
                                         ref cursor_t _cursor);
       int bit_counter = 0;
       _varint = 0;
@@ -51,7 +51,7 @@ package pb_pkg;
             current |= 8'h80;
          end
          new_bytes.push_back(current);
-      end 
+      end
       while (_varint);
       // TODO: performance
       // This might be too expensive to continuously reallocate
@@ -182,10 +182,31 @@ package pb_pkg;
    // Consumes an unknown field
    function automatic bit decode_and_consume_unknown(input wire_type_t _wire_type,
                                                      ref bytestream_t _stream,
-                                                     ref cursor_t _cursor);
-      // TODO implement
-      return 1;
+                                                     ref cursor_t _cursor,
+                                                     input longint _wire_type_2_length=-1);
+      bit retval = 0;
+      case (_wire_type)
+        0: begin
+           // Varint variable size, decode and don't use value
+           varint_t unused;
+           retval |= decode_varint(._varint(unused), ._stream(_stream), ._cursor(_cursor));
+        end
+        1: begin
+           _cursor += 8;
+        end
+        2: begin
+           if (_wire_type_2_length == -1) begin
+              retval |= decode_varint(._varint(_wire_type_2_length), ._stream(_stream), ._cursor(_cursor));
+           end
+           _cursor += _wire_type_2_length;
+        end
+        5: begin
+           _cursor += 4;
+        end
+        default: assert (0) else $display("Illegal wire type");
+      endcase
+      return retval;
    endfunction : decode_and_consume_unknown
-                                                     
-   
+
+
 endpackage : pb_pkg
