@@ -12,6 +12,12 @@ package pb_pkg;
    typedef int unsigned     field_number_t;
    typedef int unsigned     wire_type_t;
 
+   typedef enum {
+                 LABEL_OPTIONAL = 1,
+                 LABEL_REQUIRED = 2,
+                 LABEL_REPEATED = 3
+   } label_e;
+
    localparam MAX_VARINT_BYTES = (64 / 7) + 1; // Sanity check for maximum bytes for a varint
 
    // Given a byte stream, start at _position cursor and extract a varint
@@ -81,12 +87,19 @@ package pb_pkg;
 
 
    // https://developers.google.com/protocol-buffers/docs/encoding#strings
+   // If _str_length != -1, assume the varint encoding the length has already been decoded
    function automatic bit decode_type_string(output string _result,
                                              ref bytestream_t _stream,
-                                             ref cursor_t _cursor);
+                                             ref cursor_t _cursor,
+                                             input longint _str_length=-1);
       varint_t str_length;
       bit retval = 0;
-      retval |= decode_varint(._varint(str_length), ._stream(_stream), ._cursor(_cursor));
+      if (_str_length == -1) begin
+         retval |= decode_varint(._varint(str_length), ._stream(_stream), ._cursor(_cursor));
+      end
+      else begin
+         str_length = _str_length;
+      end
       while (str_length) begin
          byte current = _stream[_cursor++];
          string current_str = string'(current);
