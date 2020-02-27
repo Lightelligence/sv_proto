@@ -37,17 +37,17 @@ PB_TYPE_NUMBER_TO_SV_TYPE = {
     FieldDescriptorProto.TYPE_BYTES    : 'byte',
     FieldDescriptorProto.TYPE_DOUBLE   : 'real',
     FieldDescriptorProto.TYPE_ENUM     : 'enum',
-   #FieldDescriptorProto.TYPE_FIXED32  : '',
-   #FieldDescriptorProto.TYPE_FIXED64  : '',
+    FieldDescriptorProto.TYPE_FIXED32  : 'int unsigned',
+    FieldDescriptorProto.TYPE_FIXED64  : 'longint unsigned',
     FieldDescriptorProto.TYPE_FLOAT    : 'shortreal',
    #FieldDescriptorProto.TYPE_GROUP    : '',
     FieldDescriptorProto.TYPE_INT32    : 'int',
     FieldDescriptorProto.TYPE_INT64    : 'longint',
    #FieldDescriptorProto.TYPE_MESSAGE  : '',
-   #FieldDescriptorProto.TYPE_SFIXED32 : '',
-   #FieldDescriptorProto.TYPE_SFIXED64 : '',
-   #FieldDescriptorProto.TYPE_SINT32   : '',
-   #FieldDescriptorProto.TYPE_SINT64   : '',
+    FieldDescriptorProto.TYPE_SFIXED32 : 'int',
+    FieldDescriptorProto.TYPE_SFIXED64 : 'longint',
+    FieldDescriptorProto.TYPE_SINT32   : 'int',
+    FieldDescriptorProto.TYPE_SINT64   : 'longint',
     FieldDescriptorProto.TYPE_STRING   : 'string',
     FieldDescriptorProto.TYPE_UINT32   : 'int unsigned',
     FieldDescriptorProto.TYPE_UINT64   : 'longint unsigned',
@@ -64,17 +64,17 @@ PB_TYPE_NUMBER_TO_UVM_FIELD_MACRO = {
     FieldDescriptorProto.TYPE_BYTES   : 'int',
     FieldDescriptorProto.TYPE_DOUBLE  : 'real',
     FieldDescriptorProto.TYPE_ENUM    : 'enum',
-   #FieldDescriptorProto.TYPE_FIXED32 : '',
-   #FieldDescriptorProto.TYPE_FIXED64 : '',
+    FieldDescriptorProto.TYPE_FIXED32 : 'int',
+    FieldDescriptorProto.TYPE_FIXED64 : 'int',
     FieldDescriptorProto.TYPE_FLOAT   : 'real',
    #FieldDescriptorProto.TYPE_GROUP   : '',
     FieldDescriptorProto.TYPE_INT32   : 'int',
     FieldDescriptorProto.TYPE_INT64   : 'int',
     FieldDescriptorProto.TYPE_MESSAGE : 'object',
-   #FieldDescriptorProto.TYPE_SFIXED32: '',
-   #FieldDescriptorProto.TYPE_SFIXED64: '',
-   #FieldDescriptorProto.TYPE_SINT32  : '',
-   #FieldDescriptorProto.TYPE_SINT64  : '',
+    FieldDescriptorProto.TYPE_SFIXED32: 'int',
+    FieldDescriptorProto.TYPE_SFIXED64: 'int',
+    FieldDescriptorProto.TYPE_SINT32  : 'int',
+    FieldDescriptorProto.TYPE_SINT64  : 'int',
     FieldDescriptorProto.TYPE_STRING  : 'string',
     FieldDescriptorProto.TYPE_UINT32  : 'int',
     FieldDescriptorProto.TYPE_UINT64  : 'int',
@@ -86,17 +86,17 @@ PB_TYPE_NUMBER_TO_RAND = {
     FieldDescriptorProto.TYPE_BYTES    : 'rand ',
     FieldDescriptorProto.TYPE_DOUBLE   : '',
     FieldDescriptorProto.TYPE_ENUM     : 'rand ',
-   #FieldDescriptorProto.TYPE_FIXED32  : '',
-   #FieldDescriptorProto.TYPE_FIXED64  : '',
+    FieldDescriptorProto.TYPE_FIXED32  : 'rand ',
+    FieldDescriptorProto.TYPE_FIXED64  : 'rand ',
     FieldDescriptorProto.TYPE_FLOAT    : '',
    #FieldDescriptorProto.TYPE_GROUP    : '',
     FieldDescriptorProto.TYPE_INT32    : 'rand ',
     FieldDescriptorProto.TYPE_INT64    : 'rand ',
     FieldDescriptorProto.TYPE_MESSAGE  : 'rand ',
-   #FieldDescriptorProto.TYPE_SFIXED32 : '',
-   #FieldDescriptorProto.TYPE_SFIXED64 : '',
-   #FieldDescriptorProto.TYPE_SINT32   : '',
-   #FieldDescriptorProto.TYPE_SINT64   : '',
+    FieldDescriptorProto.TYPE_SFIXED32 : 'rand ',
+    FieldDescriptorProto.TYPE_SFIXED64 : 'rand ',
+    FieldDescriptorProto.TYPE_SINT32   : 'rand ',
+    FieldDescriptorProto.TYPE_SINT64   : 'rand ',
     FieldDescriptorProto.TYPE_STRING   : '',
     FieldDescriptorProto.TYPE_UINT32   : 'rand ',
     FieldDescriptorProto.TYPE_UINT64   : 'rand ',
@@ -243,7 +243,7 @@ def generate_code(request, response):
                 pkg.append("            assert (!pb_pkg::decode_varint(._varint(wire_type_2_length),")
                 pkg.append("                                           ._stream(_stream),")
                 pkg.append("                                           ._cursor(_cursor)));")
-                pkg.append("            packed_stop = _cursor_stop + wire_type_2_length;")
+                pkg.append("            packed_stop = _cursor + wire_type_2_length;")
                 pkg.append("        end")
                 pkg.append("        case (field_number)")
                 for f in item.field:
@@ -281,10 +281,10 @@ def generate_code(request, response):
 
                     pkg.append(f"          end")
 
-                pkg.append("          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor)));")
+                pkg.append("          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._wire_type_2_length(wire_type_2_length)));")
                 pkg.append("        endcase")
                 pkg.append("        if (wire_type == 2) begin")
-                pkg.append("          assert (_cursor == packed_stop);")
+                pkg.append("          assert (_cursor == packed_stop) else $display(\"_cursor: %0d packed_stop: %0d\", _cursor, packed_stop);")
                 pkg.append("        end")
                 pkg.append("      end")
                 pkg.append("    endfunction : _deserialize")

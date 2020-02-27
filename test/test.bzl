@@ -24,8 +24,11 @@ def golden_test(name):
         name = "{}_compile_test".format(name),
         size = "small",
         srcs = ["passthrough.sh"],
-        data = [":{}".format(name)],
-        args = ["xrun -uvm $(location :{name})".format(name=name)],
+        data = [
+            ":{}".format(name),
+            "//:pb_pkg.svh",
+            ],
+        args = ["xrun -uvm $(location //:pb_pkg.svh) $(location :{name})".format(name=name)],
         tags = ["xrun"],
     )
 

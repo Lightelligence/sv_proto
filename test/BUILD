@@ -11,9 +11,10 @@ sh_test(
     srcs = ["passthrough.sh"],
     data = [
         "//:pb_pkg.svh",
+        "//:pb",
         "pb_pkg_test.sv",
     ],
-    args = ["xrun -licqueue -uvm $(location //:pb_pkg.svh) $(location pb_pkg_test.sv)"],
+    args = ["xrun -licqueue -uvm $(locations //:pb_pkg.svh) $(location pb_pkg_test.sv)"],
     tags = ["xrun"],
 )
 
@@ -43,9 +44,11 @@ sh_test(
     srcs = ["passthrough.sh"],
     data = [
         "//:pb_pkg.svh",
+        "//:pb_decode.svh",
+        "//:pb_encode.svh",
         ":native",
         ":native_encode_test_sv",
     ],
-    args = ["xrun -licqueue -uvm $(location //:pb_pkg.svh) $(location :native) $(location :native_encode_test_sv)"],
+    args = ["xrun -licqueue -uvm $(locations //:pb_pkg.svh) $(location :native) $(location :native_encode_test_sv)"],
     tags = ["xrun"],
 )

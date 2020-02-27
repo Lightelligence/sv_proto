@@ -55,6 +55,14 @@ function automatic void test_decode_string();
    assert (result == "testing") else $display("result: %s", result);
 endfunction : test_decode_string
 
+function automatic void test_zigzag();
+   assert (_zigzag64_to_longint(0) ==  0);
+   assert (_zigzag64_to_longint(1) == -1);
+   assert (_zigzag64_to_longint(2) ==  1);
+   assert (_zigzag64_to_longint(3) == -2);
+endfunction : test_zigzag
+   
+
 module tb_top;
    initial begin
       test_varint_decode_single_byte();
@@ -62,5 +70,6 @@ module tb_top;
       test_varint_encode();
       test_message_key_encode_decode();
       test_decode_string();
+      test_zigzag();
    end
 endmodule : tb_top
