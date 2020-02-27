@@ -12,45 +12,45 @@ from google.protobuf.descriptor_pb2 import DescriptorProto, EnumDescriptorProto,
 #import pdb; pdb.set_trace()
 
 PB_TYPE_NUMBER_TO_PB_TYPE = {
-    8  : 'TYPE_BOOL',
-    12 : 'TYPE_BYTES',
-    1  : 'TYPE_DOUBLE',
-    14 : 'TYPE_ENUM',
-    7  : 'TYPE_FIXED32',
-    6  : 'TYPE_FIXED64',
-    2  : 'TYPE_FLOAT',
-    10 : 'TYPE_GROUP',
-    5  : 'TYPE_INT32',
-    3  : 'TYPE_INT64',
-    11 : 'TYPE_MESSAGE',
-    15 : 'TYPE_SFIXED32',
-    16 : 'TYPE_SFIXED64',
-    17 : 'TYPE_SINT32',
-    18 : 'TYPE_SINT64',
-    9  : 'TYPE_STRING',
-    13 : 'TYPE_UINT32',
-    4  : 'TYPE_UINT64',
+    FieldDescriptorProto.TYPE_BOOL     : 'TYPE_BOOL',
+    FieldDescriptorProto.TYPE_BYTES    : 'TYPE_BYTES',
+    FieldDescriptorProto.TYPE_DOUBLE   : 'TYPE_DOUBLE',
+    FieldDescriptorProto.TYPE_ENUM     : 'TYPE_ENUM',
+    FieldDescriptorProto.TYPE_FIXED32  : 'TYPE_FIXED32',
+    FieldDescriptorProto.TYPE_FIXED64  : 'TYPE_FIXED64',
+    FieldDescriptorProto.TYPE_FLOAT    : 'TYPE_FLOAT',
+    FieldDescriptorProto.TYPE_GROUP    : 'TYPE_GROUP',
+    FieldDescriptorProto.TYPE_INT32    : 'TYPE_INT32',
+    FieldDescriptorProto.TYPE_INT64    : 'TYPE_INT64',
+    FieldDescriptorProto.TYPE_MESSAGE  : 'TYPE_MESSAGE',
+    FieldDescriptorProto.TYPE_SFIXED32 : 'TYPE_SFIXED32',
+    FieldDescriptorProto.TYPE_SFIXED64 : 'TYPE_SFIXED64',
+    FieldDescriptorProto.TYPE_SINT32   : 'TYPE_SINT32',
+    FieldDescriptorProto.TYPE_SINT64   : 'TYPE_SINT64',
+    FieldDescriptorProto.TYPE_STRING   : 'TYPE_STRING',
+    FieldDescriptorProto.TYPE_UINT32   : 'TYPE_UINT32',
+    FieldDescriptorProto.TYPE_UINT64   : 'TYPE_UINT64',
 }
 
 PB_TYPE_NUMBER_TO_SV_TYPE = {
-    8  : 'bit'              , # TYPE_BOOL
-    12 : 'byte'             , # TYPE_BYTES
-    1  : 'real'             , # TYPE_DOUBLE
-    14 : 'enum'             , # TYPE_ENUM # FIXME
-    # 7  : ''               , # TYPE_FIXED32
-    # 6  : ''               , # TYPE_FIXED64
-    2  : 'shortreal'        , # TYPE_FLOAT
-    # 10 : ''               , # TYPE_GROUP
-    5  : 'int'              , # TYPE_INT32
-    3  : 'longint'          , # TYPE_INT64
-    # 11 : ''               , # TYPE_MESSAGE
-    # 15 : ''               , # TYPE_SFIXED32
-    # 16 : ''               , # TYPE_SFIXED64
-    # 17 : ''               , # TYPE_SINT32
-    # 18 : ''               , # TYPE_SINT64
-    9  : 'string'           , # TYPE_STRING
-    13 : 'int unsigned'     , # TYPE_UINT32
-    4  : 'longint unsigned' , # TYPE_UINT64
+    FieldDescriptorProto.TYPE_BOOL     : 'bit',
+    FieldDescriptorProto.TYPE_BYTES    : 'byte',
+    FieldDescriptorProto.TYPE_DOUBLE   : 'real',
+    FieldDescriptorProto.TYPE_ENUM     : 'enum',
+   #FieldDescriptorProto.TYPE_FIXED32  : '',
+   #FieldDescriptorProto.TYPE_FIXED64  : '',
+    FieldDescriptorProto.TYPE_FLOAT    : 'shortreal',
+   #FieldDescriptorProto.TYPE_GROUP    : '',
+    FieldDescriptorProto.TYPE_INT32    : 'int',
+    FieldDescriptorProto.TYPE_INT64    : 'longint',
+   #FieldDescriptorProto.TYPE_MESSAGE  : '',
+   #FieldDescriptorProto.TYPE_SFIXED32 : '',
+   #FieldDescriptorProto.TYPE_SFIXED64 : '',
+   #FieldDescriptorProto.TYPE_SINT32   : '',
+   #FieldDescriptorProto.TYPE_SINT64   : '',
+    FieldDescriptorProto.TYPE_STRING   : 'string',
+    FieldDescriptorProto.TYPE_UINT32   : 'int unsigned',
+    FieldDescriptorProto.TYPE_UINT64   : 'longint unsigned',
 }    
 
 def map_sv_type(pb_type_number):
@@ -60,48 +60,53 @@ def map_sv_type(pb_type_number):
         raise NotImplementedError(f"{PB_TYPE_NUMBER_TO_PB_TYPE[pb_type_number]} not supported in SV")
 
 PB_TYPE_NUMBER_TO_UVM_FIELD_MACRO = {
-    8  : 'int'    , # TYPE_BOOL
-    12 : 'int'    , # TYPE_BYTES
-    1  : 'real'   , # TYPE_DOUBLE
-    14 : 'enum'   , # TYPE_ENUM # FIXME
-    # 7  : ''     , # TYPE_FIXED32
-    # 6  : ''     , # TYPE_FIXED64
-    2  : 'real'   , # TYPE_FLOAT
-    # 10 : ''     , # TYPE_GROUP
-    5  : 'int'    , # TYPE_INT32
-    3  : 'int'    , # TYPE_INT64
-    # 11 : ''     , # TYPE_MESSAGE
-    # 15 : ''     , # TYPE_SFIXED32
-    # 16 : ''     , # TYPE_SFIXED64
-    # 17 : ''     , # TYPE_SINT32
-    # 18 : ''     , # TYPE_SINT64
-    9  : 'string' , # TYPE_STRING
-    13 : 'int'    , # TYPE_UINT32
-    4  : 'int'    , # TYPE_UINT64
+    FieldDescriptorProto.TYPE_BOOL    : 'int',
+    FieldDescriptorProto.TYPE_BYTES   : 'int',
+    FieldDescriptorProto.TYPE_DOUBLE  : 'real',
+    FieldDescriptorProto.TYPE_ENUM    : 'enum',
+   #FieldDescriptorProto.TYPE_FIXED32 : '',
+   #FieldDescriptorProto.TYPE_FIXED64 : '',
+    FieldDescriptorProto.TYPE_FLOAT   : 'real',
+   #FieldDescriptorProto.TYPE_GROUP   : '',
+    FieldDescriptorProto.TYPE_INT32   : 'int',
+    FieldDescriptorProto.TYPE_INT64   : 'int',
+    FieldDescriptorProto.TYPE_MESSAGE : 'object',
+   #FieldDescriptorProto.TYPE_SFIXED32: '',
+   #FieldDescriptorProto.TYPE_SFIXED64: '',
+   #FieldDescriptorProto.TYPE_SINT32  : '',
+   #FieldDescriptorProto.TYPE_SINT64  : '',
+    FieldDescriptorProto.TYPE_STRING  : 'string',
+    FieldDescriptorProto.TYPE_UINT32  : 'int',
+    FieldDescriptorProto.TYPE_UINT64  : 'int',
 }
 
 # See if type should be randomized
 PB_TYPE_NUMBER_TO_RAND = {
-    8  : 'rand ' , # TYPE_BOOL
-    12 : 'rand ' , # TYPE_BYTES
-    1  : ''      , # TYPE_DOUBLE
-    14 : 'rand ' , # TYPE_ENUM # FIXME
-    # 7  : ''    , # TYPE_FIXED32
-    # 6  : ''    , # TYPE_FIXED64
-    2  : ''      , # TYPE_FLOAT
-    # 10 : ''    , # TYPE_GROUP
-    5  : 'rand ' , # TYPE_INT32
-    3  : 'rand ' , # TYPE_INT64
-    # 11 : ''    , # TYPE_MESSAGE
-    # 15 : ''    , # TYPE_SFIXED32
-    # 16 : ''    , # TYPE_SFIXED64
-    # 17 : ''    , # TYPE_SINT32
-    # 18 : ''    , # TYPE_SINT64
-    9  : ''      , # TYPE_STRING
-    13 : 'rand ' , # TYPE_UINT32
-    4  : 'rand ' , # TYPE_UINT64
+    FieldDescriptorProto.TYPE_BOOL     : 'rand ',
+    FieldDescriptorProto.TYPE_BYTES    : 'rand ',
+    FieldDescriptorProto.TYPE_DOUBLE   : '',
+    FieldDescriptorProto.TYPE_ENUM     : 'rand ',
+   #FieldDescriptorProto.TYPE_FIXED32  : '',
+   #FieldDescriptorProto.TYPE_FIXED64  : '',
+    FieldDescriptorProto.TYPE_FLOAT    : '',
+   #FieldDescriptorProto.TYPE_GROUP    : '',
+    FieldDescriptorProto.TYPE_INT32    : 'rand ',
+    FieldDescriptorProto.TYPE_INT64    : 'rand ',
+    FieldDescriptorProto.TYPE_MESSAGE  : 'rand ',
+   #FieldDescriptorProto.TYPE_SFIXED32 : '',
+   #FieldDescriptorProto.TYPE_SFIXED64 : '',
+   #FieldDescriptorProto.TYPE_SINT32   : '',
+   #FieldDescriptorProto.TYPE_SINT64   : '',
+    FieldDescriptorProto.TYPE_STRING   : '',
+    FieldDescriptorProto.TYPE_UINT32   : 'rand ',
+    FieldDescriptorProto.TYPE_UINT64   : 'rand ',
 }
 
+PB_LABEL_TO_ENUM = {
+    FieldDescriptorProto.LABEL_OPTIONAL : "LABEL_OPTIONAL",
+    FieldDescriptorProto.LABEL_REQUIRED : "LABEL_REQUIRED",
+    FieldDescriptorProto.LABEL_REPEATED : "LABEL_REPEATED",
+}
 
 def map_uvm_field_macro(pb_type_number):
     try:
@@ -192,18 +197,25 @@ def generate_code(request, response):
                 pkg.append(f"  class {item.name} extends uvm_object;")
                 pkg.append("")
                 for f in item.field:
-                    if f.type == FieldDescriptorProto.TYPE_ENUM:
-                        pkg.append(f"    {PB_TYPE_NUMBER_TO_RAND[f.type]}{get_ref_type(package, imports, f.type_name)} {f.name};")
+                    is_queue = "[$]" if f.label in [f.LABEL_REPEATED] else ""
+                    if f.type == FieldDescriptorProto.TYPE_ENUM or f.type == FieldDescriptorProto.TYPE_MESSAGE:
+                        pkg.append(f"    {PB_TYPE_NUMBER_TO_RAND[f.type]}{get_ref_type(package, imports, f.type_name)} {f.name}{is_queue};")
                     else:
-                        pkg.append(f"    {PB_TYPE_NUMBER_TO_RAND[f.type]}{map_sv_type(f.type)} {f.name};")
+                        pkg.append(f"    {PB_TYPE_NUMBER_TO_RAND[f.type]}{map_sv_type(f.type)} {f.name}{is_queue};")
+
+                pkg.append("")
+
+                for f in item.field:
+                    pkg.append(f"    local const pb_pkg::label_e label__{f.name} = pb_pkg::{PB_LABEL_TO_ENUM[f.label]};")
 
                 pkg.append("")
                 pkg.append(f"    `uvm_object_utils_begin({item.name})")
                 for f in item.field:
+                    is_queue = "_queue" if f.label in [f.LABEL_REPEATED] else ""
                     if f.type == FieldDescriptorProto.TYPE_ENUM:
-                        pkg.append(f"      `uvm_field_enum({get_ref_type(package, imports, f.type_name)}, {f.name}, UVM_ALL_ON)")
+                        pkg.append(f"      `uvm_field{is_queue}_enum({get_ref_type(package, imports, f.type_name)}, {f.name}, UVM_ALL_ON)")
                     else:
-                        pkg.append(f"      `uvm_field_{map_uvm_field_macro(f.type)}({f.name}, UVM_ALL_ON)")
+                        pkg.append(f"      `uvm_field{is_queue}_{map_uvm_field_macro(f.type)}({f.name}, UVM_ALL_ON)")
                 pkg.append("    `uvm_object_utils_end")
                 pkg.append("")
                 pkg.append(f"    function new(string name=\"{item.name}\");")
@@ -216,18 +228,54 @@ def generate_code(request, response):
                 pkg.append("      this._deserialize(._stream(_stream), ._cursor(cursor), ._cursor_stop(cursor_stop));")
                 pkg.append("    endfunction : deserialize")
                 pkg.append("")
-                pkg.append("    function void _deserialize(ref pb_pkg::bytestream_t _stream, ref pb_pkg::cursor_t _cursor, ref pb_pkg::cursor_t _cursor_stop);")
+                pkg.append("    function void _deserialize(ref pb_pkg::bytestream_t _stream, ref pb_pkg::cursor_t _cursor, input pb_pkg::cursor_t _cursor_stop);")
                 pkg.append("      pb_pkg::cursor_t stream_size = _stream.size();")
                 pkg.append("      while ((_cursor < stream_size) && (_cursor < _cursor_stop)) begin")
                 pkg.append("        pb_pkg::field_number_t field_number;")
                 pkg.append("        pb_pkg::wire_type_t wire_type;")
+                pkg.append("        pb_pkg::varint_t wire_type_2_length;")
                 pkg.append("        assert (!pb_pkg::decode_message_key(._field_number(field_number),")
                 pkg.append("                                            ._wire_type(wire_type),")
                 pkg.append("                                            ._stream(_stream),")
                 pkg.append("                                            ._cursor(_cursor)));")
+                pkg.append("        if (wire_type == 2) begin")
+                pkg.append("            assert (!pb_pkg::decode_varint(._varint(wire_type_2_length),")
+                pkg.append("                                           ._stream(_stream),")
+                pkg.append("                                           ._cursor(_cursor)));")
+                pkg.append("        end")
                 pkg.append("        case (field_number)")
                 for f in item.field:
-                    pkg.append(f"          {f.number}: assert (!pb_pkg::decode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._result({f.name}), ._stream(_stream), ._cursor(_cursor)));")
+                    is_queue = f.label in [f.LABEL_REPEATED]
+                    pkg.append(f"          {f.number}: begin")
+                    if f.type == FieldDescriptorProto.TYPE_MESSAGE:
+                        result_var = f.name
+                        if is_queue:
+                            result_var = f"tmp_{f.name}"
+                            pkg.append(f"            {get_ref_type(package, imports, f.type_name)} {result_var};")
+                        pkg.append(f"            assert (wire_type == 2);")
+                        pkg.append(f"            {result_var} = {get_ref_type(package, imports, f.type_name)}::type_id::create();")
+                        pkg.append(f"            {result_var}._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + wire_type_2_length));")
+                        if is_queue:
+                            pkg.append(f"            this.{f.name}.push_back({result_var});")
+                    elif f.type == FieldDescriptorProto.TYPE_STRING:
+                        result_var = f.name
+                        if is_queue:
+                            result_var = f"tmp_{f.name}"
+                            pkg.append(f"            {map_sv_type(f.type)} {result_var};")
+                        pkg.append(f"            assert (wire_type == 2);")
+                        pkg.append(f"            assert (!pb_pkg::decode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(wire_type_2_length)));")
+                        if is_queue:
+                            pkg.append(f"            this.{f.name}.push_back({result_var});")
+                    else:
+                        result_var = f.name
+                        if is_queue:
+                            result_var = f"tmp_{f.name}"
+                            pkg.append(f"            {map_sv_type(f.type)} {result_var};")
+                        pkg.append(f"            assert (!pb_pkg::decode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
+                        if is_queue:
+                            pkg.append(f"            this.{f.name}.push_back({result_var});")
+                    pkg.append(f"          end")
+
                 pkg.append("          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor)));")
                 pkg.append("        endcase")
                 pkg.append("      end")
