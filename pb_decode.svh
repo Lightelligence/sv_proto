@@ -88,24 +88,18 @@ endfunction : decode_type_string
 function automatic bit decode_type_int32(output int _result,
                                          ref bytestream_t _stream,
                                          ref cursor_t _cursor);
-   // TODO
-   // Need to cast from longint unsigned to int?
    return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
 endfunction : decode_type_int32
 
 function automatic bit decode_type_int64(output longint _result,
                                          ref bytestream_t _stream,
                                          ref cursor_t _cursor);
-   // TODO
-   // Need to cast from longint unsigned to longint?
    return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
 endfunction : decode_type_int64
 
 function automatic bit decode_type_uint32(output int unsigned _result,
                                           ref bytestream_t _stream,
                                           ref cursor_t _cursor);
-   // TODO
-   // Need to cast from longint unsigned to int unsigned?
    return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
 endfunction : decode_type_uint32
 
@@ -126,7 +120,7 @@ function automatic bit decode_type_float(output shortreal _result,
    return retval;
 endfunction : decode_type_float
 
-function automatic bit decode_type_double(output shortreal _result,
+function automatic bit decode_type_double(output real _result,
                                           ref bytestream_t _stream,
                                           ref cursor_t _cursor);
    bit [63:0] result_bits;
