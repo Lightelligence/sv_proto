@@ -204,13 +204,21 @@ package pb_pkg;
       return _extract_64_bits(._result(_result), ._stream(_stream), ._cursor(_cursor));
    endfunction : decode_type_sfixed64
 
+   function int _zigzag32_to_int(input int unsigned _in);
+      return (_in >> 1) ^ -(_in & 1);
+   endfunction : _zigzag32_to_int
+
+   function longint _zigzag64_to_longint(input longint unsigned _in);
+      return (_in >> 1) ^ -(_in & 1);
+   endfunction : _zigzag64_to_longint
+
    function automatic bit decode_type_sint32(output int _result,
                                              ref bytestream_t _stream,
                                              ref cursor_t _cursor);
       bit        retval;
       bit [31:0] zigzag;
       retval |= _extract_32_bits(._result(zigzag), ._stream(_stream), ._cursor(_cursor));
-      _result = (zigzag << 1) ^ (zigzag >> 31);
+      _result = _zigzag32_to_int(zigzag);
       return retval;
    endfunction : decode_type_sint32
    
@@ -220,7 +228,7 @@ package pb_pkg;
       bit        retval;
       bit [63:0] zigzag;
       retval |= _extract_64_bits(._result(zigzag), ._stream(_stream), ._cursor(_cursor));
-      _result = (zigzag << 1) ^ (zigzag >> 63);
+      _result = _zigzag64_to_longint(zigzag);
       return retval;
    endfunction : decode_type_sint64
 
