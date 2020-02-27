@@ -78,7 +78,30 @@ PB_TYPE_NUMBER_TO_UVM_FIELD_MACRO = {
     9  : 'string' , # TYPE_STRING
     13 : 'int'    , # TYPE_UINT32
     4  : 'int'    , # TYPE_UINT64
-}    
+}
+
+# See if type should be randomized
+PB_TYPE_NUMBER_TO_RAND = {
+    8  : 'rand ' , # TYPE_BOOL
+    12 : 'rand ' , # TYPE_BYTES
+    1  : ''      , # TYPE_DOUBLE
+    14 : 'rand ' , # TYPE_ENUM # FIXME
+    # 7  : ''    , # TYPE_FIXED32
+    # 6  : ''    , # TYPE_FIXED64
+    2  : ''      , # TYPE_FLOAT
+    # 10 : ''    , # TYPE_GROUP
+    5  : 'rand ' , # TYPE_INT32
+    3  : 'rand ' , # TYPE_INT64
+    # 11 : ''    , # TYPE_MESSAGE
+    # 15 : ''    , # TYPE_SFIXED32
+    # 16 : ''    , # TYPE_SFIXED64
+    # 17 : ''    , # TYPE_SINT32
+    # 18 : ''    , # TYPE_SINT64
+    9  : ''      , # TYPE_STRING
+    13 : 'rand ' , # TYPE_UINT32
+    4  : 'rand ' , # TYPE_UINT64
+}
+
 
 def map_uvm_field_macro(pb_type_number):
     try:
@@ -170,9 +193,9 @@ def generate_code(request, response):
                 pkg.append("")
                 for f in item.field:
                     if f.type == FieldDescriptorProto.TYPE_ENUM:
-                        pkg.append(f"    {get_ref_type(package, imports, f.type_name)} {f.name};")
+                        pkg.append(f"    {PB_TYPE_NUMBER_TO_RAND[f.type]}{get_ref_type(package, imports, f.type_name)} {f.name};")
                     else:
-                        pkg.append(f"    {map_sv_type(f.type)} {f.name};")
+                        pkg.append(f"    {PB_TYPE_NUMBER_TO_RAND[f.type]}{map_sv_type(f.type)} {f.name};")
 
                 pkg.append("")
                 pkg.append(f"    `uvm_object_utils_begin({item.name})")
