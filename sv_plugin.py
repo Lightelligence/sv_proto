@@ -234,6 +234,7 @@ def generate_code(request, response):
                 pkg.append("        pb_pkg::field_number_t field_number;")
                 pkg.append("        pb_pkg::wire_type_t wire_type;")
                 pkg.append("        pb_pkg::varint_t wire_type_2_length;")
+                pkg.append("        pb_pkg::cursor_t packed_stop;")
                 pkg.append("        assert (!pb_pkg::decode_message_key(._field_number(field_number),")
                 pkg.append("                                            ._wire_type(wire_type),")
                 pkg.append("                                            ._stream(_stream),")
@@ -242,6 +243,7 @@ def generate_code(request, response):
                 pkg.append("            assert (!pb_pkg::decode_varint(._varint(wire_type_2_length),")
                 pkg.append("                                           ._stream(_stream),")
                 pkg.append("                                           ._cursor(_cursor)));")
+                pkg.append("            packed_stop = _cursor_stop + wire_type_2_length;")
                 pkg.append("        end")
                 pkg.append("        case (field_number)")
                 for f in item.field:
@@ -271,13 +273,19 @@ def generate_code(request, response):
                         if is_queue:
                             result_var = f"tmp_{f.name}"
                             pkg.append(f"            {map_sv_type(f.type)} {result_var};")
-                        pkg.append(f"            assert (!pb_pkg::decode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
+                        pkg.append(f"            do begin")
+                        pkg.append(f"              assert (!pb_pkg::decode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
                         if is_queue:
-                            pkg.append(f"            this.{f.name}.push_back({result_var});")
+                            pkg.append(f"              this.{f.name}.push_back({result_var});")
+                        pkg.append(f"            end while ((wire_type == 2) && (_cursor < packed_stop));")
+
                     pkg.append(f"          end")
 
                 pkg.append("          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor)));")
                 pkg.append("        endcase")
+                pkg.append("        if (wire_type == 2) begin")
+                pkg.append("          assert (_cursor == packed_stop);")
+                pkg.append("        end")
                 pkg.append("      end")
                 pkg.append("    endfunction : _deserialize")
                 pkg.append("")
