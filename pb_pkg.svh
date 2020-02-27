@@ -179,6 +179,51 @@ package pb_pkg;
       return retval;
    endfunction : decode_type_double
 
+   function automatic bit decode_type_fixed32(output int unsigned _result,
+                                              ref bytestream_t _stream,
+                                              ref cursor_t _cursor);
+      return _extract_32_bits(._result(_result), ._stream(_stream), ._cursor(_cursor));
+   endfunction : decode_type_fixed32
+   
+   function automatic bit decode_type_fixed64(output longint unsigned _result,
+                                              ref bytestream_t _stream,
+                                              ref cursor_t _cursor);
+      return _extract_64_bits(._result(_result), ._stream(_stream), ._cursor(_cursor));
+   endfunction : decode_type_fixed64
+
+
+   function automatic bit decode_type_sfixed32(output int _result,
+                                              ref bytestream_t _stream,
+                                              ref cursor_t _cursor);
+      return _extract_32_bits(._result(_result), ._stream(_stream), ._cursor(_cursor));
+   endfunction : decode_type_sfixed32
+   
+   function automatic bit decode_type_sfixed64(output longint _result,
+                                               ref bytestream_t _stream,
+                                               ref cursor_t _cursor);
+      return _extract_64_bits(._result(_result), ._stream(_stream), ._cursor(_cursor));
+   endfunction : decode_type_sfixed64
+
+   function automatic bit decode_type_sint32(output int _result,
+                                             ref bytestream_t _stream,
+                                             ref cursor_t _cursor);
+      bit        retval;
+      bit [31:0] zigzag;
+      retval |= _extract_32_bits(._result(zigzag), ._stream(_stream), ._cursor(_cursor));
+      _result = (zigzag << 1) ^ (zigzag >> 31);
+      return retval;
+   endfunction : decode_type_sint32
+   
+   function automatic bit decode_type_sint64(output longint _result,
+                                             ref bytestream_t _stream,
+                                             ref cursor_t _cursor);
+      bit        retval;
+      bit [63:0] zigzag;
+      retval |= _extract_64_bits(._result(zigzag), ._stream(_stream), ._cursor(_cursor));
+      _result = (zigzag << 1) ^ (zigzag >> 63);
+      return retval;
+   endfunction : decode_type_sint64
+
    // Consumes an unknown field
    function automatic bit decode_and_consume_unknown(input wire_type_t _wire_type,
                                                      ref bytestream_t _stream,
