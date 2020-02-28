@@ -10,6 +10,14 @@ Encoding documentation:
 package pb_pkg;
 
    typedef byte             bytestream_t[];
+   // Using a queue to build up the bytestream for encoding,
+   // otherwise it would be necessary to check and frequently resize the array.
+   // Another option, assuming that sizing down a dynamic array is cheap,
+   // would be to attempt to calculate the size before encoding,
+   // oversize the creation, then resize down at the end.
+   // However, calculation would have to be recursive because repeated embedded
+   // messages may have heterogeneous sizes.
+   typedef byte             enc_bytestream_t[$];
    typedef int unsigned     cursor_t;
    typedef longint unsigned varint_t;
    typedef int unsigned     field_number_t;
