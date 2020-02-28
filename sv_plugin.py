@@ -116,11 +116,11 @@ PB_TYPE_NUMBER_TO_UVM_FIELD_MACRO = {
 PB_TYPE_NUMBER_TO_RAND = {
     FieldDescriptorProto.TYPE_BOOL     : 'rand ',
     FieldDescriptorProto.TYPE_BYTES    : 'rand ',
-    FieldDescriptorProto.TYPE_DOUBLE   : '',
+    FieldDescriptorProto.TYPE_DOUBLE   : '`pb_real_rand ',
     FieldDescriptorProto.TYPE_ENUM     : 'rand ',
     FieldDescriptorProto.TYPE_FIXED32  : 'rand ',
     FieldDescriptorProto.TYPE_FIXED64  : 'rand ',
-    FieldDescriptorProto.TYPE_FLOAT    : '',
+    FieldDescriptorProto.TYPE_FLOAT    : '`pb_real_rand ',
    #FieldDescriptorProto.TYPE_GROUP    : '',
     FieldDescriptorProto.TYPE_INT32    : 'rand ',
     FieldDescriptorProto.TYPE_INT64    : 'rand ',
@@ -269,6 +269,10 @@ class SVFieldDescriptorProto():
     def sv_wire_type(self):
         return f"{PB_TYPE_NUMBER_TO_WIRE_TYPE[self.type]}"
     
+    @property
+    def sv_number(self):
+        return f"{self.name}__field_number"
+    
 def generate_code(request, response):
     pkgs = {}
     
@@ -301,7 +305,7 @@ def generate_code(request, response):
                 pkg.append("")
 
                 for f in sv_fields:
-                    pkg.append(f"    local const {PB_PKG}::field_number_t {f.name}__field_number = {f.number};")
+                    pkg.append(f"    local const {PB_PKG}::field_number_t {f.sv_number} = {f.number};")
                 pkg.append("")
 
                 for f in sv_fields:
@@ -347,7 +351,7 @@ def generate_code(request, response):
                             pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
                         pkg.append(f"        {PB_PKG}::enc_bytestream_t sub_stream;")
                         pkg.append(f"        tmp._serialize(._stream(sub_stream));")
-                        pkg.append(f"        {PB_PKG}::encode_delimited(._field_number({f.number}),")
+                        pkg.append(f"        {PB_PKG}::encode_delimited(._field_number(this.{f.sv_number}),")
                         pkg.append(f"                                 ._delimited_stream(sub_stream),")
                         pkg.append(f"                                 ._stream(_stream));")
                         pkg.append(f"      end")
@@ -359,7 +363,7 @@ def generate_code(request, response):
                             pkg.append(f"      begin")
                             # FIXME skip if optional
                             pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
-                        pkg.append(f"        {PB_PKG}::encode_message_key(._field_number({f.number}),")
+                        pkg.append(f"        {PB_PKG}::encode_message_key(._field_number(this.{f.sv_number}),")
                         pkg.append(f"                                   ._wire_type({PB_PKG}::WIRE_TYPE_DELIMITED),")
                         pkg.append(f"                                   ._stream(_stream));")
                         pkg.append(f"        {PB_PKG}::encode_type_string(._value(tmp),")
@@ -372,7 +376,7 @@ def generate_code(request, response):
                             pkg.append(f"        foreach (this.{f.name}[ii]) begin")
                             pkg.append(f"          {PB_PKG}::{f.sv_encode_func}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
                             pkg.append(f"        end")
-                            pkg.append(f"        {PB_PKG}::encode_delimited(._field_number({f.number}),")
+                            pkg.append(f"        {PB_PKG}::encode_delimited(._field_number(this.{f.sv_number}),")
                             pkg.append(f"                                 ._delimited_stream(sub_stream),")
                             pkg.append(f"                                 ._stream(_stream));")
                             pkg.append(f"      end")
@@ -384,7 +388,7 @@ def generate_code(request, response):
                                 pkg.append(f"      begin")
                                 # FIXME skip if optional
                                 pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
-                            pkg.append(f"        {PB_PKG}::encode_message_key(._field_number({f.number}),")
+                            pkg.append(f"        {PB_PKG}::encode_message_key(._field_number(this.{f.sv_number}),")
                             pkg.append(f"                                   ._wire_type({f.sv_wire_type}),")
                             pkg.append(f"                                   ._stream(_stream));")
                             pkg.append(f"        {PB_PKG}::{f.sv_encode_func}(._value(tmp), ._stream(_stream));")

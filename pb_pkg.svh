@@ -7,6 +7,12 @@ Encoding documentation:
 `ifndef __PB_PKG_SVH__
  `define __PB_PKG_SVH__
 
+// Use +define+pb_real_rand=rand for simulators that support real number
+// randomization
+ `ifndef pb_real_rand
+  `define pb_real_rand
+ `endif
+
 package pb_pkg;
 
    typedef byte             bytestream_t[];
