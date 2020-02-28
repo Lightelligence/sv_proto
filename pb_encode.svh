@@ -13,7 +13,7 @@ function automatic void queue_extend(ref enc_bytestream_t _modify, ref enc_bytes
    end
 endfunction : queue_extend
 
-function automatic void _insert_32_bits(output bit [31:0] _value,
+function automatic void _insert_32_bits(input bit [31:0] _value,
                                        ref enc_bytestream_t _stream);
    for (int unsigned ii=0; ii < 32; ii+=8) begin
       byte tmp = (_value >> ii) & 8'hFF;
@@ -21,8 +21,8 @@ function automatic void _insert_32_bits(output bit [31:0] _value,
    end
 endfunction : _insert_32_bits
 
-function automatic void _insert_64_bits(output bit [63:0] _value,
-                                       ref enc_bytestream_t _stream);
+function automatic void _insert_64_bits(input bit [63:0] _value,
+                                        ref enc_bytestream_t _stream);
    for (int unsigned ii=0; ii < 64; ii+=8) begin
       byte tmp = (_value >> ii) & 8'hFF;
       _stream.push_back(tmp);
