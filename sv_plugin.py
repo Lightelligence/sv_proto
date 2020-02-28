@@ -407,12 +407,10 @@ def generate_code(request, response):
                 pkg.append("        case (field_number)")
                 for f in sv_fields:
                     pkg.append(f"          {f.name}__field_number: begin")
-                    # FIXME add assertions that appropriate wire_type was received if not delimited
                     result_var = f.name
                     if f.sv_queue:
                         result_var = f"tmp_{f.name}"
                         pkg.append(f"            {f.sv_type} {result_var};")
-
                     if f.type == FieldDescriptorProto.TYPE_MESSAGE:
                         pkg.append(f"            assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
                         pkg.append(f"            {result_var} = {f.sv_type}::type_id::create();")
@@ -425,6 +423,7 @@ def generate_code(request, response):
                         if f.sv_queue:
                             pkg.append(f"            this.{f.name}.push_back({result_var});")
                     else:
+                        pkg.append(f"            assert ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) || (wire_type == {PB_PKG}::{f.sv_wire_type}));")
                         pkg.append(f"            do begin")
                         pkg.append(f"              assert (!{PB_PKG}::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
                         if f.sv_queue:
