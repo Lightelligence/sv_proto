@@ -60,6 +60,18 @@ function automatic bit encode_message_key(input field_number_t _field_number,
    return encode_varint(._varint(varint), ._stream(_stream));
 endfunction : encode_message_key
 
+function automatic bit encode_delimited(input field_number_t _field_number,
+                                        ref enc_bytestream_t _delimited_stream,
+                                        ref enc_bytestream_t _stream);
+   encode_message_key(._field_number(_field_number),
+                      ._wire_type(2),
+                      ._stream(_stream));
+   pb_pkg::encode_varint(._value(_delimited_stream.size()),
+                         ._stream(_stream));
+   pb_pkg::queue_extend(._modify(_stream),
+                        ._discard(_delimited_stream));
+endfunction : encode_delimited
+
 function automatic bit encode_type_string(input string _value,
                                           ref enc_bytestream_t _stream);
    bit retval;

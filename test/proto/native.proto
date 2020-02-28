@@ -2,12 +2,17 @@ syntax = "proto2";
 
 // This example is intended to test a single message with native types
 
+message Foobar {
+  required string fudge = 1;
+}
+
 message Hello {
   required string name = 1;
   optional int32 age = 2;
   optional uint32 old_age = 3;
-  required uint64 dinosaur_age = 6;
+  repeated uint64 dinosaur_age = 6 [packed=true];
   required sint64 maybe_negative = 7;
   required float mean = 4;
   optional double avg = 5;
+  required Foobar foobar = 12;
 }

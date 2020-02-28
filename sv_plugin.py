@@ -319,12 +319,9 @@ def generate_code(request, response):
                             pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
                         pkg.append(f"        pb_pkg::enc_bytestream_t sub_stream;")
                         pkg.append(f"        tmp._serialize(._stream(sub_stream));")
-                        pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
-                        pkg.append(f"                                   ._wire_type(2),")
-                        pkg.append(f"                                   ._stream(_stream));")
-                        pkg.append(f"        pb_pkg::encode_varint(._value(sub_stream.size()),")
-                        pkg.append(f"                              ._stream(_stream));")
-                        pkg.append(f"        pb_pkg::queue_extend(._modify(_stream), ._discard(sub_stream));")
+                        pkg.append(f"        pb_pkg::encode_delimited(._field_number({f.number}),")
+                        pkg.append(f"                                 ._delimited_stream(sub_stream),")
+                        pkg.append(f"                                 ._stream(_stream));")
                         pkg.append(f"      end")
                     elif f.type == FieldDescriptorProto.TYPE_STRING:
                         if f.sv_queue:
@@ -347,12 +344,9 @@ def generate_code(request, response):
                             pkg.append(f"        foreach (this.{f.name}[ii]) begin")
                             pkg.append(f"          pb_pkg::encode_{f.sv_xxcode_func}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
                             pkg.append(f"        end")
-                            pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
-                            pkg.append(f"                                   ._wire_type({WIRE_TYPE_DELIMITED}),")
-                            pkg.append(f"                                   ._stream(_stream));")
-                            pkg.append(f"        pb_pkg::encode_varint(._value(sub_stream.size()),")
-                            pkg.append(f"                              ._stream(_stream));")
-                            pkg.append(f"        pb_pkg::queue_extend(._modify(_stream), ._discard(sub_stream));")
+                            pkg.append(f"        pb_pkg::encode_delimited(._field_number({f.number}),")
+                            pkg.append(f"                                 ._delimited_stream(sub_stream),")
+                            pkg.append(f"                                 ._stream(_stream));")
                             pkg.append(f"      end")
                         else:
                             if f.sv_queue:
