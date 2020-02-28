@@ -11,6 +11,8 @@ from google.protobuf.compiler import plugin_pb2 as plugin
 from google.protobuf.descriptor_pb2 import DescriptorProto, EnumDescriptorProto, FieldDescriptorProto
 #import pdb; pdb.set_trace()
 
+PB_PKG = "pb_pkg"
+
 PB_TYPE_NUMBER_TO_PB_TYPE = {
     FieldDescriptorProto.TYPE_BOOL     : 'TYPE_BOOL',
     FieldDescriptorProto.TYPE_BYTES    : 'TYPE_BYTES',
@@ -299,11 +301,11 @@ def generate_code(request, response):
                 pkg.append("")
 
                 for f in sv_fields:
-                    pkg.append(f"    local const pb_pkg::field_number_t {f.name}__field_number = {f.number};")
+                    pkg.append(f"    local const {PB_PKG}::field_number_t {f.name}__field_number = {f.number};")
                 pkg.append("")
 
                 for f in sv_fields:
-                    pkg.append(f"    local const pb_pkg::label_e {f.name}__label = pb_pkg::{f.sv_label};")
+                    pkg.append(f"    local const {PB_PKG}::label_e {f.name}__label = {PB_PKG}::{f.sv_label};")
                 pkg.append("")
 
                 pkg.append(f"    `uvm_object_utils_begin({item.name})")
@@ -315,13 +317,13 @@ def generate_code(request, response):
                 pkg.append("       super.new(.name(name));")
                 pkg.append("    endfunction : new")
                 pkg.append("")
-                pkg.append("    function void serialize(ref pb_pkg::bytestream_t _stream);")
-                pkg.append("      pb_pkg::enc_bytestream_t enc_stream;")
+                pkg.append(f"    function void serialize(ref {PB_PKG}::bytestream_t _stream);")
+                pkg.append(f"      {PB_PKG}::enc_bytestream_t enc_stream;")
                 pkg.append("      this._serialize(._stream(enc_stream));")
-                pkg.append("      pb_pkg::_bytestream_queue_to_dynamic_array(._out(_stream), ._in(enc_stream));")
+                pkg.append(f"      {PB_PKG}::_bytestream_queue_to_dynamic_array(._out(_stream), ._in(enc_stream));")
                 pkg.append("    endfunction : serialize")
                 pkg.append("")
-                pkg.append("    function void _serialize(ref pb_pkg::enc_bytestream_t _stream);")
+                pkg.append(f"    function void _serialize(ref {PB_PKG}::enc_bytestream_t _stream);")
                 for f in sv_fields:
                     # FIXME add assertions that required fields are initialized
                     if f.type == FieldDescriptorProto.TYPE_MESSAGE:
@@ -332,9 +334,9 @@ def generate_code(request, response):
                             pkg.append(f"      begin")
                             # FIXME skip if optional
                             pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
-                        pkg.append(f"        pb_pkg::enc_bytestream_t sub_stream;")
+                        pkg.append(f"        {PB_PKG}::enc_bytestream_t sub_stream;")
                         pkg.append(f"        tmp._serialize(._stream(sub_stream));")
-                        pkg.append(f"        pb_pkg::encode_delimited(._field_number({f.number}),")
+                        pkg.append(f"        {PB_PKG}::encode_delimited(._field_number({f.number}),")
                         pkg.append(f"                                 ._delimited_stream(sub_stream),")
                         pkg.append(f"                                 ._stream(_stream));")
                         pkg.append(f"      end")
@@ -346,20 +348,20 @@ def generate_code(request, response):
                             pkg.append(f"      begin")
                             # FIXME skip if optional
                             pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
-                        pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
-                        pkg.append(f"                                   ._wire_type(pb_pkg::WIRE_TYPE_DELIMITED),")
+                        pkg.append(f"        {PB_PKG}::encode_message_key(._field_number({f.number}),")
+                        pkg.append(f"                                   ._wire_type({PB_PKG}::WIRE_TYPE_DELIMITED),")
                         pkg.append(f"                                   ._stream(_stream));")
-                        pkg.append(f"        pb_pkg::encode_type_string(._value(tmp),")
+                        pkg.append(f"        {PB_PKG}::encode_type_string(._value(tmp),")
                         pkg.append(f"                                   ._stream(_stream));")
                         pkg.append(f"      end")
                     else:
                         if f.options.packed: # Packed implies repeated?
                             pkg.append(f"      begin")
-                            pkg.append(f"        pb_pkg::enc_bytestream_t sub_stream;")
+                            pkg.append(f"        {PB_PKG}::enc_bytestream_t sub_stream;")
                             pkg.append(f"        foreach (this.{f.name}[ii]) begin")
-                            pkg.append(f"          pb_pkg::{f.sv_encode_func}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
+                            pkg.append(f"          {PB_PKG}::{f.sv_encode_func}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
                             pkg.append(f"        end")
-                            pkg.append(f"        pb_pkg::encode_delimited(._field_number({f.number}),")
+                            pkg.append(f"        {PB_PKG}::encode_delimited(._field_number({f.number}),")
                             pkg.append(f"                                 ._delimited_stream(sub_stream),")
                             pkg.append(f"                                 ._stream(_stream));")
                             pkg.append(f"      end")
@@ -371,33 +373,33 @@ def generate_code(request, response):
                                 pkg.append(f"      begin")
                                 # FIXME skip if optional
                                 pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
-                            pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
+                            pkg.append(f"        {PB_PKG}::encode_message_key(._field_number({f.number}),")
                             pkg.append(f"                                   ._wire_type({f.sv_wire_type}),")
                             pkg.append(f"                                   ._stream(_stream));")
-                            pkg.append(f"        pb_pkg::{f.sv_encode_func}(._value(tmp), ._stream(_stream));")
+                            pkg.append(f"        {PB_PKG}::{f.sv_encode_func}(._value(tmp), ._stream(_stream));")
                             pkg.append("      end")
                 pkg.append("")
                 pkg.append("    endfunction : _serialize")
                 pkg.append("")
-                pkg.append("    function void deserialize(ref pb_pkg::bytestream_t _stream);")
-                pkg.append("      pb_pkg::cursor_t cursor = 0;")
-                pkg.append("      pb_pkg::cursor_t cursor_stop = -1;")
+                pkg.append(f"    function void deserialize(ref {PB_PKG}::bytestream_t _stream);")
+                pkg.append(f"      {PB_PKG}::cursor_t cursor = 0;")
+                pkg.append(f"      {PB_PKG}::cursor_t cursor_stop = -1;")
                 pkg.append("      this._deserialize(._stream(_stream), ._cursor(cursor), ._cursor_stop(cursor_stop));")
                 pkg.append("    endfunction : deserialize")
                 pkg.append("")
-                pkg.append("    function void _deserialize(ref pb_pkg::bytestream_t _stream, ref pb_pkg::cursor_t _cursor, input pb_pkg::cursor_t _cursor_stop);")
-                pkg.append("      pb_pkg::cursor_t stream_size = _stream.size();")
+                pkg.append(f"    function void _deserialize(ref {PB_PKG}::bytestream_t _stream, ref {PB_PKG}::cursor_t _cursor, input {PB_PKG}::cursor_t _cursor_stop);")
+                pkg.append(f"      {PB_PKG}::cursor_t stream_size = _stream.size();")
                 pkg.append("      while ((_cursor < stream_size) && (_cursor < _cursor_stop)) begin")
-                pkg.append("        pb_pkg::field_number_t field_number;")
-                pkg.append("        pb_pkg::wire_type_e wire_type;")
-                pkg.append("        pb_pkg::varint_t delimited_length;")
-                pkg.append("        pb_pkg::cursor_t delimited_stop;")
-                pkg.append("        assert (!pb_pkg::decode_message_key(._field_number(field_number),")
+                pkg.append(f"        {PB_PKG}::field_number_t field_number;")
+                pkg.append(f"        {PB_PKG}::wire_type_e wire_type;")
+                pkg.append(f"        {PB_PKG}::varint_t delimited_length;")
+                pkg.append(f"        {PB_PKG}::cursor_t delimited_stop;")
+                pkg.append(f"        assert (!{PB_PKG}::decode_message_key(._field_number(field_number),")
                 pkg.append("                                            ._wire_type(wire_type),")
                 pkg.append("                                            ._stream(_stream),")
                 pkg.append("                                            ._cursor(_cursor)));")
-                pkg.append("        if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin")
-                pkg.append("            assert (!pb_pkg::decode_varint(._value(delimited_length),")
+                pkg.append(f"        if (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) begin")
+                pkg.append(f"            assert (!{PB_PKG}::decode_varint(._value(delimited_length),")
                 pkg.append("                                           ._stream(_stream),")
                 pkg.append("                                           ._cursor(_cursor)));")
                 pkg.append("            delimited_stop = _cursor + delimited_length;")
@@ -411,7 +413,7 @@ def generate_code(request, response):
                         if f.sv_queue:
                             result_var = f"tmp_{f.name}"
                             pkg.append(f"            {f.sv_type} {result_var};")
-                        pkg.append(f"            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);")
+                        pkg.append(f"            assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
                         pkg.append(f"            {result_var} = {f.sv_type}::type_id::create();")
                         pkg.append(f"            {result_var}._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + delimited_length));")
                         if f.sv_queue:
@@ -421,8 +423,8 @@ def generate_code(request, response):
                         if f.sv_queue:
                             result_var = f"tmp_{f.name}"
                             pkg.append(f"            {f.sv_type} {result_var};")
-                        pkg.append(f"            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);")
-                        pkg.append(f"            assert (!pb_pkg::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));")
+                        pkg.append(f"            assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
+                        pkg.append(f"            assert (!{PB_PKG}::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));")
                         if f.sv_queue:
                             pkg.append(f"            this.{f.name}.push_back({result_var});")
                     else:
@@ -431,15 +433,15 @@ def generate_code(request, response):
                             result_var = f"tmp_{f.name}"
                             pkg.append(f"            {f.sv_type} {result_var};")
                         pkg.append(f"            do begin")
-                        pkg.append(f"              assert (!pb_pkg::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
+                        pkg.append(f"              assert (!{PB_PKG}::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
                         if f.sv_queue:
                             pkg.append(f"              this.{f.name}.push_back({result_var});")
-                        pkg.append(f"            end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));")
+                        pkg.append(f"            end while ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));")
                     pkg.append(f"          end")
 
-                pkg.append("          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));")
+                pkg.append(f"          default : assert (!{PB_PKG}::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));")
                 pkg.append("        endcase")
-                pkg.append("        if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin")
+                pkg.append(f"        if (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) begin")
                 pkg.append("          assert (_cursor == delimited_stop) else $display(\"_cursor: %0d delimited_stop: %0d\", _cursor, delimited_stop);")
                 pkg.append("        end")
                 pkg.append("      end")
