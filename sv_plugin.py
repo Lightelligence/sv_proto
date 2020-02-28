@@ -89,12 +89,6 @@ PB_TYPE_NUMBER_TO_SV_TYPE = {
     FieldDescriptorProto.TYPE_UINT64   : 'longint unsigned',
 }    
 
-def map_sv_type(pb_type_number):
-    try:
-        return PB_TYPE_NUMBER_TO_SV_TYPE[pb_type_number]
-    except KeyError:
-        raise NotImplementedError(f"{PB_TYPE_NUMBER_TO_PB_TYPE[pb_type_number]} not supported in SV")
-
 PB_TYPE_NUMBER_TO_UVM_FIELD_MACRO = {
     FieldDescriptorProto.TYPE_BOOL    : 'int',
     FieldDescriptorProto.TYPE_BYTES   : 'int',
@@ -207,6 +201,59 @@ def get_ref_type(package, imports, type_name):
             
     return type_name
 
+class SVFieldDescriptorProto():
+    """Helper functions on FieldDescriptorProto specific to this generator."""
+    def __init__(self, f, package, imports):
+        self.f = f
+        self.package = package
+        self.imports = imports
+
+    def __getattr__(self, attribute):
+        try:
+            return super(SVFieldDescriptorProto, self).__getattr__(attribute)
+        except AttributeError:
+            return getattr(self.f, attribute)
+
+    @property
+    def sv_type(self):
+        if self.type == FieldDescriptorProto.TYPE_ENUM or self.type == FieldDescriptorProto.TYPE_MESSAGE:
+            return f"{get_ref_type(self.package, self.imports, self.type_name)}"
+        else:
+            try:
+                return PB_TYPE_NUMBER_TO_SV_TYPE[self.type]
+            except KeyError:
+                raise NotImplementedError(f"{PB_TYPE_NUMBER_TO_PB_TYPE[self.type]} not supported in SV")
+
+    @property
+    def sv_queue(self):
+        return "[$]" if self.label in [self.LABEL_REPEATED] else ""
+
+    @property
+    def sv_rand(self):
+        return f"{PB_TYPE_NUMBER_TO_RAND[self.type]}"
+
+    @property
+    def sv_xxcode_func(self):
+        return f"{PB_TYPE_NUMBER_TO_PB_TYPE[self.type].lower()}"
+
+    @property
+    def sv_label(self):
+        return f"{PB_LABEL_TO_ENUM[self.label]}"
+
+    @property
+    def sv_field_macro(self):
+        return f"`uvm_field{self.sv_queue}_{map_uvm_field_macro(self.type)}"
+
+    @property
+    def sv_field_macro_args(self):
+        if self.type == FieldDescriptorProto.TYPE_ENUM:
+            return f"{self.sv_type}, {self.name}, UVM_ALL_ON)"
+        else:
+            return f"{self.name}, UVM_ALL_ON"
+
+    @property
+    def sv_wire_type(self):
+        return f"{PB_TYPE_NUMBER_TO_WIRE_TYPE[self.type]}"
     
 def generate_code(request, response):
     pkgs = {}
@@ -232,26 +279,21 @@ def generate_code(request, response):
                 #lines.append(str(dir(FieldDescriptorProto)))
                 pkg.append(f"  class {item.name} extends uvm_object;")
                 pkg.append("")
-                for f in item.field:
-                    is_queue = "[$]" if f.label in [f.LABEL_REPEATED] else ""
-                    if f.type == FieldDescriptorProto.TYPE_ENUM or f.type == FieldDescriptorProto.TYPE_MESSAGE:
-                        pkg.append(f"    {PB_TYPE_NUMBER_TO_RAND[f.type]}{get_ref_type(package, imports, f.type_name)} {f.name}{is_queue};")
-                    else:
-                        pkg.append(f"    {PB_TYPE_NUMBER_TO_RAND[f.type]}{map_sv_type(f.type)} {f.name}{is_queue};")
+                
+                sv_fields = [SVFieldDescriptorProto(f, package, imports) for f in item.field]
+
+                for f in sv_fields:
+                    pkg.append(f"    {f.sv_rand}{f.sv_type} {f.name}{f.sv_queue};")
 
                 pkg.append("")
 
-                for f in item.field:
-                    pkg.append(f"    local const pb_pkg::label_e label__{f.name} = pb_pkg::{PB_LABEL_TO_ENUM[f.label]};")
+                for f in sv_fields:
+                    pkg.append(f"    local const pb_pkg::label_e label__{f.name} = pb_pkg::{f.sv_label};")
 
                 pkg.append("")
                 pkg.append(f"    `uvm_object_utils_begin({item.name})")
-                for f in item.field:
-                    is_queue = "_queue" if f.label in [f.LABEL_REPEATED] else ""
-                    if f.type == FieldDescriptorProto.TYPE_ENUM:
-                        pkg.append(f"      `uvm_field{is_queue}_enum({get_ref_type(package, imports, f.type_name)}, {f.name}, UVM_ALL_ON)")
-                    else:
-                        pkg.append(f"      `uvm_field{is_queue}_{map_uvm_field_macro(f.type)}({f.name}, UVM_ALL_ON)")
+                for f in sv_fields:
+                        pkg.append(f"      {f.sv_field_macro}({f.sv_field_macro_args})")
                 pkg.append("    `uvm_object_utils_end")
                 pkg.append("")
                 pkg.append(f"    function new(string name=\"{item.name}\");")
@@ -265,17 +307,16 @@ def generate_code(request, response):
                 pkg.append("    endfunction : serialize")
                 pkg.append("")
                 pkg.append("    function void _serialize(ref pb_pkg::enc_bytestream_t _stream);")
-                for f in item.field:
+                for f in sv_fields:
                     # FIXME add assertions that required fields are initialized
-                    is_queue = f.label in [f.LABEL_REPEATED]
                     if f.type == FieldDescriptorProto.TYPE_MESSAGE:
-                        if is_queue:
+                        if f.sv_queue:
                             pkg.append(f"      foreach (this.{f.name}[ii]) begin")
-                            pkg.append(f"        {get_ref_type(package, imports, f.type_name)} tmp = this.{f.name}[ii];")
+                            pkg.append(f"        {f.sv_type} tmp = this.{f.name}[ii];")
                         else:
                             pkg.append(f"      begin")
                             # FIXME skip if optional
-                            pkg.append(f"        {get_ref_type(package, imports, f.type_name)} tmp = this.{f.name};")
+                            pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
                         pkg.append(f"        pb_pkg::enc_bytestream_t sub_stream;")
                         pkg.append(f"        tmp._serialize(._stream(sub_stream));")
                         pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
@@ -286,13 +327,13 @@ def generate_code(request, response):
                         pkg.append(f"        pb_pkg::queue_extend(._modify(_stream), ._discard(sub_stream));")
                         pkg.append(f"      end")
                     elif f.type == FieldDescriptorProto.TYPE_STRING:
-                        if is_queue:
+                        if f.sv_queue:
                             pkg.append(f"      foreach (this.{f.name}[ii]) begin")
-                            pkg.append(f"        string tmp = this.{f.name}[ii];")
+                            pkg.append(f"        {f.sv_type} tmp = this.{f.name}[ii];")
                         else:
                             pkg.append(f"      begin")
                             # FIXME skip if optional
-                            pkg.append(f"        string tmp = this.{f.name};")
+                            pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
                         pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
                         pkg.append(f"                                   ._wire_type(2),")
                         pkg.append(f"                                   ._stream(_stream));")
@@ -304,7 +345,7 @@ def generate_code(request, response):
                             pkg.append(f"      begin")
                             pkg.append(f"        pb_pkg::enc_stream_t sub_stream;")
                             pkg.append(f"        foreach (this.{f.name}[ii]) begin")
-                            pkg.append(f"          pb_pkg::encode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
+                            pkg.append(f"          pb_pkg::encode_{f.sv_xxcode_func}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
                             pkg.append(f"        end")
                             pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
                             pkg.append(f"                                   ._wire_type({WIRE_TYPE_DELIMITED}),")
@@ -314,17 +355,17 @@ def generate_code(request, response):
                             pkg.append(f"        pb_pkg::queue_extend(._modify(_stream), ._discard(sub_stream));")
                             pkg.append(f"      end")
                         else:
-                            if is_queue:
+                            if f.sv_queue:
                                 pkg.append(f"      foreach (this.{f.name}[ii]) begin")
-                                pkg.append(f"        {map_sv_type(f.type)} tmp = this.{f.name}[ii];")
+                                pkg.append(f"        {f.sv_type} tmp = this.{f.name}[ii];")
                             else:
                                 pkg.append(f"      begin")
                                 # FIXME skip if optional
-                                pkg.append(f"        {map_sv_type(f.type)} tmp = this.{f.name};")
+                                pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
                             pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
-                            pkg.append(f"                                   ._wire_type({PB_TYPE_NUMBER_TO_WIRE_TYPE[f.type]}),")
+                            pkg.append(f"                                   ._wire_type({f.sv_wire_type}),")
                             pkg.append(f"                                   ._stream(_stream));")
-                            pkg.append(f"        pb_pkg::encode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._value(this.{f.name}), ._stream(_stream));")
+                            pkg.append(f"        pb_pkg::encode_{f.sv_xxcode_func}(._value(this.{f.name}), ._stream(_stream));")
                             pkg.append("      end")
                 pkg.append("")
                 pkg.append("    endfunction : _serialize")
@@ -353,37 +394,36 @@ def generate_code(request, response):
                 pkg.append("            packed_stop = _cursor + wire_type_2_length;")
                 pkg.append("        end")
                 pkg.append("        case (field_number)")
-                for f in item.field:
-                    is_queue = f.label in [f.LABEL_REPEATED]
+                for f in sv_fields:
                     pkg.append(f"          {f.number}: begin")
                     # FIXME add assertions that appropriate wire_type was received if not delimited
                     if f.type == FieldDescriptorProto.TYPE_MESSAGE:
                         result_var = f.name
-                        if is_queue:
+                        if f.sv_queue:
                             result_var = f"tmp_{f.name}"
-                            pkg.append(f"            {get_ref_type(package, imports, f.type_name)} {result_var};")
+                            pkg.append(f"            {f.sv_type} {result_var};")
                         pkg.append(f"            assert (wire_type == 2);")
-                        pkg.append(f"            {result_var} = {get_ref_type(package, imports, f.type_name)}::type_id::create();")
+                        pkg.append(f"            {result_var} = {f.sv_type}::type_id::create();")
                         pkg.append(f"            {result_var}._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + wire_type_2_length));")
-                        if is_queue:
+                        if f.sv_queue:
                             pkg.append(f"            this.{f.name}.push_back({result_var});")
                     elif f.type == FieldDescriptorProto.TYPE_STRING:
                         result_var = f.name
-                        if is_queue:
+                        if f.sv_queue:
                             result_var = f"tmp_{f.name}"
-                            pkg.append(f"            {map_sv_type(f.type)} {result_var};")
+                            pkg.append(f"            {f.sv_type} {result_var};")
                         pkg.append(f"            assert (wire_type == 2);")
-                        pkg.append(f"            assert (!pb_pkg::decode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(wire_type_2_length)));")
-                        if is_queue:
+                        pkg.append(f"            assert (!pb_pkg::decode_{f.sv_xxcode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(wire_type_2_length)));")
+                        if f.sv_queue:
                             pkg.append(f"            this.{f.name}.push_back({result_var});")
                     else:
                         result_var = f.name
-                        if is_queue:
+                        if f.sv_queue:
                             result_var = f"tmp_{f.name}"
-                            pkg.append(f"            {map_sv_type(f.type)} {result_var};")
+                            pkg.append(f"            {f.sv_type} {result_var};")
                         pkg.append(f"            do begin")
-                        pkg.append(f"              assert (!pb_pkg::decode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
-                        if is_queue:
+                        pkg.append(f"              assert (!pb_pkg::decode_{f.sv_xxcode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
+                        if f.sv_queue:
                             pkg.append(f"              this.{f.name}.push_back({result_var});")
                         pkg.append(f"            end while ((wire_type == 2) && (_cursor < packed_stop));")
                     pkg.append(f"          end")
