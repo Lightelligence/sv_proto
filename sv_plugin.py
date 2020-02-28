@@ -237,6 +237,14 @@ class SVFieldDescriptorProto():
         return f"{PB_TYPE_NUMBER_TO_PB_TYPE[self.type].lower()}"
 
     @property
+    def sv_decode_func(self):
+        return f"decode_{self.sv_xxcode_func}"
+
+    @property
+    def sv_encode_func(self):
+        return f"encode_{self.sv_xxcode_func}"
+
+    @property
     def sv_label(self):
         return f"{PB_LABEL_TO_ENUM[self.label]}"
 
@@ -349,7 +357,7 @@ def generate_code(request, response):
                             pkg.append(f"      begin")
                             pkg.append(f"        pb_pkg::enc_bytestream_t sub_stream;")
                             pkg.append(f"        foreach (this.{f.name}[ii]) begin")
-                            pkg.append(f"          pb_pkg::encode_{f.sv_xxcode_func}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
+                            pkg.append(f"          pb_pkg::{f.sv_encode_func}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
                             pkg.append(f"        end")
                             pkg.append(f"        pb_pkg::encode_delimited(._field_number({f.number}),")
                             pkg.append(f"                                 ._delimited_stream(sub_stream),")
@@ -366,7 +374,7 @@ def generate_code(request, response):
                             pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
                             pkg.append(f"                                   ._wire_type({f.sv_wire_type}),")
                             pkg.append(f"                                   ._stream(_stream));")
-                            pkg.append(f"        pb_pkg::encode_{f.sv_xxcode_func}(._value(tmp), ._stream(_stream));")
+                            pkg.append(f"        pb_pkg::{f.sv_encode_func}(._value(tmp), ._stream(_stream));")
                             pkg.append("      end")
                 pkg.append("")
                 pkg.append("    endfunction : _serialize")
@@ -414,7 +422,7 @@ def generate_code(request, response):
                             result_var = f"tmp_{f.name}"
                             pkg.append(f"            {f.sv_type} {result_var};")
                         pkg.append(f"            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);")
-                        pkg.append(f"            assert (!pb_pkg::decode_{f.sv_xxcode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));")
+                        pkg.append(f"            assert (!pb_pkg::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));")
                         if f.sv_queue:
                             pkg.append(f"            this.{f.name}.push_back({result_var});")
                     else:
@@ -423,7 +431,7 @@ def generate_code(request, response):
                             result_var = f"tmp_{f.name}"
                             pkg.append(f"            {f.sv_type} {result_var};")
                         pkg.append(f"            do begin")
-                        pkg.append(f"              assert (!pb_pkg::decode_{f.sv_xxcode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
+                        pkg.append(f"              assert (!pb_pkg::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
                         if f.sv_queue:
                             pkg.append(f"              this.{f.name}.push_back({result_var});")
                         pkg.append(f"            end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));")
