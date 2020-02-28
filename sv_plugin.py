@@ -300,7 +300,7 @@ def generate_code(request, response):
                 pkg.append("       super.new(.name(name));")
                 pkg.append("    endfunction : new")
                 pkg.append("")
-                pkg.append("    function void serialize(ref pb_pkg::bytestream_t _stream)")
+                pkg.append("    function void serialize(ref pb_pkg::bytestream_t _stream);")
                 pkg.append("      pb_pkg::enc_stream_t enc_stream;")
                 pkg.append("      this._serialize(._stream(enc_stream));")
                 pkg.append("      assert (!pb_pkg::_bytestream_queue_to_dynamic_array(._out(_stream), ._in(enc_stream)));")
