@@ -308,6 +308,14 @@ def generate_code(request, response):
                     pkg.append(f"    local const {PB_PKG}::label_e {f.name}__label = {PB_PKG}::{f.sv_label};")
                 pkg.append("")
 
+                # TODO
+                # Not sure how to set these if not randomizing the object
+                # Using getters/setters isn't worthwhile if the member is local
+                # Making the member local makes it more difficult to randomize
+                for f in sv_fields:
+                    pkg.append(f"    bit {f.name}__is_initialized = 0;")
+                pkg.append("")
+
                 pkg.append(f"    `uvm_object_utils_begin({item.name})")
                 for f in sv_fields:
                         pkg.append(f"      {f.sv_field_macro}({f.sv_field_macro_args})")
@@ -324,6 +332,7 @@ def generate_code(request, response):
                 pkg.append("    endfunction : serialize")
                 pkg.append("")
                 pkg.append(f"    function void _serialize(ref {PB_PKG}::enc_bytestream_t _stream);")
+                pkg.append("       assert (this.is_initialized());")
                 for f in sv_fields:
                     # FIXME add assertions that required fields are initialized
                     if f.type == FieldDescriptorProto.TYPE_MESSAGE:
@@ -429,6 +438,8 @@ def generate_code(request, response):
                         if f.sv_queue:
                             pkg.append(f"              this.{f.name}.push_back({result_var});")
                         pkg.append(f"            end while ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));")
+                    if f.label == f.LABEL_REQUIRED:
+                        pkg.append(f"            this.{f.name}__is_initialized = 1;")
                     pkg.append(f"          end")
 
                 pkg.append(f"          default : assert (!{PB_PKG}::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));")
@@ -437,8 +448,29 @@ def generate_code(request, response):
                 pkg.append("          assert (_cursor == delimited_stop) else $display(\"_cursor: %0d delimited_stop: %0d\", _cursor, delimited_stop);")
                 pkg.append("        end")
                 pkg.append("      end")
-                # FIXME add assertions that required fields were initialized
+                pkg.append("      assert (this.is_initialized());")
                 pkg.append("    endfunction : _deserialize")
+                pkg.append("")
+                pkg.append("    function bit is_initialized();")
+                pkg.append("      is_initialized = 1;")
+                for f in sv_fields:
+                    if f.label == f.LABEL_REQUIRED:
+                        pkg.append(f"      is_initialized &= this.{f.name}__is_initialized;")
+                pkg.append("    endfunction : is_initialized")
+
+                pkg.append("    function void post_randomize();")
+                for f in sv_fields:
+                    if f.label == f.LABEL_REQUIRED:
+                        if f.type == FieldDescriptorProto.TYPE_MESSAGE:
+                            pkg.append(f"      if (this.{f.name} != null) begin")
+                            pkg.append(f"        this.{f.name}__is_initialized = 1;")
+                            pkg.append(f"      end")
+                        else:
+                            # TODO
+                            # What about strings and floats?
+                            pkg.append(f"      this.{f.name}__is_initialized = 1;")
+                pkg.append("    endfunction : post_randomize")
+
                 pkg.append("")
                 pkg.append(f"  endclass : {item.name}")
                 pkg.append("")
