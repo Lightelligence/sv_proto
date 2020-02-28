@@ -8,6 +8,12 @@ function automatic bit _bytestream_queue_to_dynamic_array(ref bytestream_t _out,
    return 0;
 endfunction : _bytestream_queue_to_dynamic_array
 
+function automatic queue_extend(ref enc_bytestream_t _modify, ref enc_bytestream_t _discard);
+   foreach (_discard[ii]) begin
+      _modify.push_back(_discard[ii]);
+   end
+endfunction queue_extend
+
 function automatic bit _insert_32_bits(output bit [31:0] _value,
                                        ref enc_bytestream_t _stream);
    for (int unsigned ii=0; ii < 32; ii+=8) begin

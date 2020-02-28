@@ -32,6 +32,42 @@ PB_TYPE_NUMBER_TO_PB_TYPE = {
     FieldDescriptorProto.TYPE_UINT64   : 'TYPE_UINT64',
 }
 
+WIRE_TYPE_VARINT = 0
+WIRE_TYPE_64BIT = 1
+WIRE_TYPE_DELIMITED = 2
+#WIRE_TYPE_START_GROUP = 3
+#WIRE_TYPE_END_GROUP = 4
+WIRE_TYPE_32BIT = 5
+
+# FIXME looking at this, bytes are being handled inappropriately as a single byte, not as an array of bytes
+# 0	Varint	int32, int64, uint32, uint64, sint32, sint64, bool, enum
+# 1	64-bit	fixed64, sfixed64, double
+# 2	Length-delimited	string, bytes, embedded messages, packed repeated fields
+# 3	Start group	groups (deprecated)
+# 4	End group	groups (deprecated)
+# 5	32-bit	fixed32, sfixed32, float
+PB_TYPE_NUMBER_TO_WIRE_TYPE = {
+    FieldDescriptorProto.TYPE_BOOL     : WIRE_TYPE_VARINT,
+    FieldDescriptorProto.TYPE_BYTES    : WIRE_TYPE_DELIMITED,
+    FieldDescriptorProto.TYPE_DOUBLE   : WIRE_TYPE_64BIT,
+    FieldDescriptorProto.TYPE_ENUM     : WIRE_TYPE_VARINT,
+    FieldDescriptorProto.TYPE_FIXED32  : WIRE_TYPE_32BIT,
+    FieldDescriptorProto.TYPE_FIXED64  : WIRE_TYPE_64BIT,
+    FieldDescriptorProto.TYPE_FLOAT    : WIRE_TYPE_32BIT,
+  # FieldDescriptorProto.TYPE_GROUP    : -1, # Unsupported
+    FieldDescriptorProto.TYPE_INT32    : WIRE_TYPE_VARINT,
+    FieldDescriptorProto.TYPE_INT64    : WIRE_TYPE_VARINT,
+    FieldDescriptorProto.TYPE_MESSAGE  : WIRE_TYPE_DELIMITED,
+    FieldDescriptorProto.TYPE_SFIXED32 : WIRE_TYPE_32BIT,
+    FieldDescriptorProto.TYPE_SFIXED64 : WIRE_TYPE_64BIT,
+    FieldDescriptorProto.TYPE_SINT32   : WIRE_TYPE_VARINT,
+    FieldDescriptorProto.TYPE_SINT64   : WIRE_TYPE_VARINT,
+    FieldDescriptorProto.TYPE_STRING   : WIRE_TYPE_DELIMITED,
+    FieldDescriptorProto.TYPE_UINT32   : WIRE_TYPE_VARINT,
+    FieldDescriptorProto.TYPE_UINT64   : WIRE_TYPE_VARINT,
+}
+
+
 PB_TYPE_NUMBER_TO_SV_TYPE = {
     FieldDescriptorProto.TYPE_BOOL     : 'bit',
     FieldDescriptorProto.TYPE_BYTES    : 'byte',
@@ -222,6 +258,77 @@ def generate_code(request, response):
                 pkg.append("       super.new(.name(name));")
                 pkg.append("    endfunction : new")
                 pkg.append("")
+                pkg.append("    function void serialize(ref pb_pkg::bytestream_t _stream)")
+                pkg.append("      pb_pkg::enc_stream_t enc_stream;")
+                pkg.append("      this._serialize(._stream(enc_stream));")
+                pkg.append("      assert (!pb_pkg::_bytestream_queue_to_dynamic_array(._out(_stream), ._in(enc_stream)));")
+                pkg.append("    endfunction : serialize")
+                pkg.append("")
+                pkg.append("    function void _serialize(ref pb_pkg::enc_bytestream_t _stream);")
+                for f in item.field:
+                    # FIXME add assertions that required fields are initialized
+                    is_queue = f.label in [f.LABEL_REPEATED]
+                    if f.type == FieldDescriptorProto.TYPE_MESSAGE:
+                        if is_queue:
+                            pkg.append(f"      foreach (this.{f.name}[ii]) begin")
+                            pkg.append(f"        {get_ref_type(package, imports, f.type_name)} tmp = this.{f.name}[ii];")
+                        else:
+                            pkg.append(f"      begin")
+                            # FIXME skip if optional
+                            pkg.append(f"        {get_ref_type(package, imports, f.type_name)} tmp = this.{f.name};")
+                        pkg.append(f"        pb_pkg::enc_bytestream_t sub_stream;")
+                        pkg.append(f"        tmp._serialize(._stream(sub_stream));")
+                        pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
+                        pkg.append(f"                                   ._wire_type(2),")
+                        pkg.append(f"                                   ._stream(_stream));")
+                        pkg.append(f"        pb_pkg::encode_varint(._value(sub_stream.size()),")
+                        pkg.append(f"                              ._stream(_stream));")
+                        pkg.append(f"        pb_pkg::queue_extend(._modify(_stream), ._discard(sub_stream));")
+                        pkg.append(f"      end")
+                    elif f.type == FieldDescriptorProto.TYPE_STRING:
+                        if is_queue:
+                            pkg.append(f"      foreach (this.{f.name}[ii]) begin")
+                            pkg.append(f"        string tmp = this.{f.name}[ii];")
+                        else:
+                            pkg.append(f"      begin")
+                            # FIXME skip if optional
+                            pkg.append(f"        string tmp = this.{f.name};")
+                        pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
+                        pkg.append(f"                                   ._wire_type(2),")
+                        pkg.append(f"                                   ._stream(_stream));")
+                        pkg.append(f"        pb_pkg::encode_type_string(._value(tmp),")
+                        pkg.append(f"                                   ._stream(_stream));")
+                        pkg.append(f"      end")
+                    else:
+                        if f.options.packed: # Packed implies repeated?
+                            pkg.append(f"      begin")
+                            pkg.append(f"        pb_pkg::enc_stream_t sub_stream;")
+                            pkg.append(f"        foreach (this.{f.name}[ii]) begin")
+                            pkg.append(f"          pb_pkg::encode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
+                            pkg.append(f"        end")
+                            pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
+                            pkg.append(f"                                   ._wire_type({WIRE_TYPE_DELIMITED}),")
+                            pkg.append(f"                                   ._stream(_stream));")
+                            pkg.append(f"        pb_pkg::encode_varint(._value(sub_stream.size()),")
+                            pkg.append(f"                              ._stream(_stream));")
+                            pkg.append(f"        pb_pkg::queue_extend(._modify(_stream), ._discard(sub_stream));")
+                            pkg.append(f"      end")
+                        else:
+                            if is_queue:
+                                pkg.append(f"      foreach (this.{f.name}[ii]) begin")
+                                pkg.append(f"        {map_sv_type(f.type)} tmp = this.{f.name}[ii];")
+                            else:
+                                pkg.append(f"      begin")
+                                # FIXME skip if optional
+                                pkg.append(f"        {map_sv_type(f.type)} tmp = this.{f.name};")
+                            pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
+                            pkg.append(f"                                   ._wire_type({PB_TYPE_NUMBER_TO_WIRE_TYPE[f.type]}),")
+                            pkg.append(f"                                   ._stream(_stream));")
+                            pkg.append(f"        pb_pkg::encode_{PB_TYPE_NUMBER_TO_PB_TYPE[f.type].lower()}(._value(this.{f.name}), ._stream(_stream));")
+                            pkg.append("      end")
+                pkg.append("")
+                pkg.append("    endfunction : _serialize")
+                pkg.append("")
                 pkg.append("    function void deserialize(ref pb_pkg::bytestream_t _stream);")
                 pkg.append("      pb_pkg::cursor_t cursor = 0;")
                 pkg.append("      pb_pkg::cursor_t cursor_stop = -1;")
@@ -249,6 +356,7 @@ def generate_code(request, response):
                 for f in item.field:
                     is_queue = f.label in [f.LABEL_REPEATED]
                     pkg.append(f"          {f.number}: begin")
+                    # FIXME add assertions that appropriate wire_type was received if not delimited
                     if f.type == FieldDescriptorProto.TYPE_MESSAGE:
                         result_var = f.name
                         if is_queue:
@@ -278,7 +386,6 @@ def generate_code(request, response):
                         if is_queue:
                             pkg.append(f"              this.{f.name}.push_back({result_var});")
                         pkg.append(f"            end while ((wire_type == 2) && (_cursor < packed_stop));")
-
                     pkg.append(f"          end")
 
                 pkg.append("          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._wire_type_2_length(wire_type_2_length)));")
@@ -287,6 +394,7 @@ def generate_code(request, response):
                 pkg.append("          assert (_cursor == packed_stop) else $display(\"_cursor: %0d packed_stop: %0d\", _cursor, packed_stop);")
                 pkg.append("        end")
                 pkg.append("      end")
+                # FIXME add assertions that required fields were initialized
                 pkg.append("    endfunction : _deserialize")
                 pkg.append("")
                 pkg.append(f"  endclass : {item.name}")
