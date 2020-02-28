@@ -313,7 +313,9 @@ def generate_code(request, response):
                 # Using getters/setters isn't worthwhile if the member is local
                 # Making the member local makes it more difficult to randomize
                 for f in sv_fields:
-                    pkg.append(f"    bit {f.name}__is_initialized = 0;")
+                    # Message fields should be calculated recursively
+                    if f.type != FieldDescriptorProto.TYPE_MESSAGE:
+                        pkg.append(f"    bit {f.name}__is_initialized = 0;")
                 pkg.append("")
 
                 pkg.append(f"    `uvm_object_utils_begin({item.name})")
@@ -455,21 +457,23 @@ def generate_code(request, response):
                 pkg.append("      is_initialized = 1;")
                 for f in sv_fields:
                     if f.label == f.LABEL_REQUIRED:
-                        pkg.append(f"      is_initialized &= this.{f.name}__is_initialized;")
+                        if f.type == FieldDescriptorProto.TYPE_MESSAGE:
+                            pkg.append(f"      if (this.{f.name} == null) begin")
+                            pkg.append(f"        return 0;")
+                            pkg.append(f"      else begin")
+                            pkg.append(f"        is_initialized &= this.{f.name}.is_initialized();")
+                            pkg.append(f"      end")
+                        else:
+                            pkg.append(f"      is_initialized &= this.{f.name}__is_initialized;")
                 pkg.append("    endfunction : is_initialized")
 
                 pkg.append("    function void post_randomize();")
                 for f in sv_fields:
                     if f.label == f.LABEL_REQUIRED:
-                        if f.type == FieldDescriptorProto.TYPE_MESSAGE:
-                            pkg.append(f"      if (this.{f.name} != null) begin")
-                            pkg.append(f"        this.{f.name}__is_initialized = 1;")
-                            pkg.append(f"      end")
-                        else:
-                            # TODO
-                            # What about strings and floats?
-                            # What about rand_mode(0) fields?
-                            pkg.append(f"      this.{f.name}__is_initialized = 1;")
+                        # TODO
+                        # What about strings and floats?
+                        # What about rand_mode(0) fields?
+                        pkg.append(f"      this.{f.name}__is_initialized = 1;")
                 pkg.append("    endfunction : post_randomize")
 
                 pkg.append("")
