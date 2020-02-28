@@ -363,7 +363,7 @@ def generate_code(request, response):
                             pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
                             pkg.append(f"                                   ._wire_type({f.sv_wire_type}),")
                             pkg.append(f"                                   ._stream(_stream));")
-                            pkg.append(f"        pb_pkg::encode_{f.sv_xxcode_func}(._value(this.{f.name}), ._stream(_stream));")
+                            pkg.append(f"        pb_pkg::encode_{f.sv_xxcode_func}(._value(tmp), ._stream(_stream));")
                             pkg.append("      end")
                 pkg.append("")
                 pkg.append("    endfunction : _serialize")
