@@ -242,7 +242,11 @@ class SVFieldDescriptorProto():
 
     @property
     def sv_field_macro(self):
-        return f"`uvm_field{self.sv_queue}_{map_uvm_field_macro(self.type)}"
+        if self.sv_queue:
+            queue = "_queue"
+        else:
+            queue = ""
+        return f"`uvm_field{queue}_{map_uvm_field_macro(self.type)}"
 
     @property
     def sv_field_macro_args(self):
