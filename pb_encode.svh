@@ -12,7 +12,7 @@ function automatic queue_extend(ref enc_bytestream_t _modify, ref enc_bytestream
    foreach (_discard[ii]) begin
       _modify.push_back(_discard[ii]);
    end
-endfunction queue_extend
+endfunction : queue_extend
 
 function automatic bit _insert_32_bits(output bit [31:0] _value,
                                        ref enc_bytestream_t _stream);
