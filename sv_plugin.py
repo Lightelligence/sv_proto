@@ -382,17 +382,17 @@ def generate_code(request, response):
                 pkg.append("      while ((_cursor < stream_size) && (_cursor < _cursor_stop)) begin")
                 pkg.append("        pb_pkg::field_number_t field_number;")
                 pkg.append("        pb_pkg::wire_type_e wire_type;")
-                pkg.append("        pb_pkg::varint_t wire_type_2_length;")
-                pkg.append("        pb_pkg::cursor_t packed_stop;")
+                pkg.append("        pb_pkg::varint_t delimited_length;")
+                pkg.append("        pb_pkg::cursor_t delimited_stop;")
                 pkg.append("        assert (!pb_pkg::decode_message_key(._field_number(field_number),")
                 pkg.append("                                            ._wire_type(wire_type),")
                 pkg.append("                                            ._stream(_stream),")
                 pkg.append("                                            ._cursor(_cursor)));")
-                pkg.append("        if (wire_type == 2) begin")
-                pkg.append("            assert (!pb_pkg::decode_varint(._value(wire_type_2_length),")
+                pkg.append("        if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin")
+                pkg.append("            assert (!pb_pkg::decode_varint(._value(delimited_length),")
                 pkg.append("                                           ._stream(_stream),")
                 pkg.append("                                           ._cursor(_cursor)));")
-                pkg.append("            packed_stop = _cursor + wire_type_2_length;")
+                pkg.append("            delimited_stop = _cursor + delimited_length;")
                 pkg.append("        end")
                 pkg.append("        case (field_number)")
                 for f in sv_fields:
@@ -403,9 +403,9 @@ def generate_code(request, response):
                         if f.sv_queue:
                             result_var = f"tmp_{f.name}"
                             pkg.append(f"            {f.sv_type} {result_var};")
-                        pkg.append(f"            assert (wire_type == 2);")
+                        pkg.append(f"            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);")
                         pkg.append(f"            {result_var} = {f.sv_type}::type_id::create();")
-                        pkg.append(f"            {result_var}._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + wire_type_2_length));")
+                        pkg.append(f"            {result_var}._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + delimited_length));")
                         if f.sv_queue:
                             pkg.append(f"            this.{f.name}.push_back({result_var});")
                     elif f.type == FieldDescriptorProto.TYPE_STRING:
@@ -413,8 +413,8 @@ def generate_code(request, response):
                         if f.sv_queue:
                             result_var = f"tmp_{f.name}"
                             pkg.append(f"            {f.sv_type} {result_var};")
-                        pkg.append(f"            assert (wire_type == 2);")
-                        pkg.append(f"            assert (!pb_pkg::decode_{f.sv_xxcode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(wire_type_2_length)));")
+                        pkg.append(f"            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);")
+                        pkg.append(f"            assert (!pb_pkg::decode_{f.sv_xxcode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));")
                         if f.sv_queue:
                             pkg.append(f"            this.{f.name}.push_back({result_var});")
                     else:
@@ -426,13 +426,13 @@ def generate_code(request, response):
                         pkg.append(f"              assert (!pb_pkg::decode_{f.sv_xxcode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
                         if f.sv_queue:
                             pkg.append(f"              this.{f.name}.push_back({result_var});")
-                        pkg.append(f"            end while ((wire_type == 2) && (_cursor < packed_stop));")
+                        pkg.append(f"            end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));")
                     pkg.append(f"          end")
 
-                pkg.append("          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._wire_type_2_length(wire_type_2_length)));")
+                pkg.append("          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));")
                 pkg.append("        endcase")
-                pkg.append("        if (wire_type == 2) begin")
-                pkg.append("          assert (_cursor == packed_stop) else $display(\"_cursor: %0d packed_stop: %0d\", _cursor, packed_stop);")
+                pkg.append("        if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin")
+                pkg.append("          assert (_cursor == delimited_stop) else $display(\"_cursor: %0d delimited_stop: %0d\", _cursor, delimited_stop);")
                 pkg.append("        end")
                 pkg.append("      end")
                 # FIXME add assertions that required fields were initialized

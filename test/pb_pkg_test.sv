@@ -50,7 +50,7 @@ function automatic void test_message_key_encode_decode();
    bytestream_t stream;
    cursor_t cursor = 0;
    field_number_t field_number = 12;
-   wire_type_t wire_type = 2;
+   wire_type_e wire_type = WIRE_TYPE_DELIMITED;
    bit failure = encode_message_key(field_number, wire_type, enc_stream);
    assert (failure == 0);
    failure = _bytestream_queue_to_dynamic_array(._out(stream), ._in(enc_stream));
@@ -60,7 +60,7 @@ function automatic void test_message_key_encode_decode();
    wire_type = 0;
    failure = decode_message_key(field_number, wire_type, stream, cursor);
    assert (field_number == 12) else $display("field_number: %0d", field_number);
-   assert (wire_type == 2) else $display("wire_type: %0d", wire_type);
+   assert (wire_type == WIRE_TYPE_DELIMITED) else $display("wire_type: %0d", wire_type);
 endfunction : test_message_key_encode_decode
 
 function automatic void test_decode_string();

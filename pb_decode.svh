@@ -179,24 +179,24 @@ endfunction : decode_type_sint64
 function automatic bit decode_and_consume_unknown(input wire_type_e _wire_type,
                                                   ref bytestream_t _stream,
                                                   ref cursor_t _cursor,
-                                                  input longint _wire_type_2_length=-1);
+                                                  input longint _delimited_length=-1);
    bit                                                          retval = 0;
    case (_wire_type)
-     0: begin
+     WIRE_TYPE_VARINT: begin
         // Varint variable size, decode and don't use value
         varint_t unused;
         retval |= decode_varint(._value(unused), ._stream(_stream), ._cursor(_cursor));
      end
-     1: begin
+     WIRE_TYPE_64BIT: begin
         _cursor += 8;
      end
-     2: begin
-        if (_wire_type_2_length == -1) begin
-           retval |= decode_varint(._value(_wire_type_2_length), ._stream(_stream), ._cursor(_cursor));
+     WIRE_TYPE_DELIMITED: begin
+        if (_delimited_length == -1) begin
+           retval |= decode_varint(._value(_delimited_length), ._stream(_stream), ._cursor(_cursor));
         end
-        _cursor += _wire_type_2_length;
+        _cursor += _delimited_length;
      end
-     5: begin
+     WIRE_TYPE_32BIT: begin
         _cursor += 4;
      end
      default: assert (0) else $display("Illegal wire type");
