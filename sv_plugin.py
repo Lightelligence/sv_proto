@@ -356,7 +356,7 @@ def generate_code(request, response):
                         pkg.append(f"      end")
                     else:
                         if f.options.packed: # Packed implies repeated?
-                            pkg.append(f"      begin")
+                            pkg.append(f"      if (this.{f.name}.size()) begin")
                             pkg.append(f"        {PB_PKG}::enc_bytestream_t sub_stream;")
                             pkg.append(f"        foreach (this.{f.name}[ii]) begin")
                             pkg.append(f"          {PB_PKG}::{f.sv_encode_func}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
