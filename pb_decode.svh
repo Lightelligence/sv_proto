@@ -49,14 +49,14 @@ endfunction : decode_varint
 
 // https://developers.google.com/protocol-buffers/docs/encoding#structure
 function automatic bit decode_message_key(output field_number_t _field_number,
-                                          output wire_type_t _wire_type,
+                                          output wire_type_e _wire_type,
                                           ref bytestream_t _stream,
                                           ref cursor_t _cursor);
    varint_t varint;
    bit                                           retval = 0;
    retval = decode_varint(._value(varint), ._stream(_stream), ._cursor(_cursor));
    _field_number = varint >> 3;
-   _wire_type = wire_type_t'(varint & 3'b111);
+   _wire_type = wire_type_e'(varint & 3'b111);
    return retval;
 endfunction : decode_message_key
 
@@ -176,7 +176,7 @@ function automatic bit decode_type_sint64(output longint _result,
 endfunction : decode_type_sint64
 
 // Consumes an unknown field
-function automatic bit decode_and_consume_unknown(input wire_type_t _wire_type,
+function automatic bit decode_and_consume_unknown(input wire_type_e _wire_type,
                                                   ref bytestream_t _stream,
                                                   ref cursor_t _cursor,
                                                   input longint _wire_type_2_length=-1);

@@ -28,7 +28,7 @@ package pb_pkg;
                  //WIRE_TYPE_START_GROUP = 3,
                  //WIRE_TYPE_END_GROUP = 4,
                  WIRE_TYPE_32BIT = 5
-                 } wire_type_t;
+                 } wire_type_e;
 
 
    typedef enum {

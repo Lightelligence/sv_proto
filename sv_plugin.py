@@ -381,7 +381,7 @@ def generate_code(request, response):
                 pkg.append("      pb_pkg::cursor_t stream_size = _stream.size();")
                 pkg.append("      while ((_cursor < stream_size) && (_cursor < _cursor_stop)) begin")
                 pkg.append("        pb_pkg::field_number_t field_number;")
-                pkg.append("        pb_pkg::wire_type_t wire_type;")
+                pkg.append("        pb_pkg::wire_type_e wire_type;")
                 pkg.append("        pb_pkg::varint_t wire_type_2_length;")
                 pkg.append("        pb_pkg::cursor_t packed_stop;")
                 pkg.append("        assert (!pb_pkg::decode_message_key(._field_number(field_number),")

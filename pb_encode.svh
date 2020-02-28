@@ -50,7 +50,7 @@ function automatic void encode_varint(input varint_t _value,
 endfunction : encode_varint
 
 function automatic void encode_message_key(input field_number_t _field_number,
-                                          input wire_type_t _wire_type,
+                                          input wire_type_e _wire_type,
                                           ref enc_bytestream_t _stream);
    varint_t varint = (_field_number << 3) | _wire_type;
    encode_varint(._value(varint), ._stream(_stream));
