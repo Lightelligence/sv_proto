@@ -23,11 +23,11 @@ endfunction : _insert_64_bits
 
 function int unsigned _int_to_zigzag32(input int _in);
    return (_in << 1) ^ (_in >>> 31);
-endfunction : _zigzag32_to_int
+endfunction : _int_to_zigzag32
 
 function longint unsigned _longint_to_zigzag64(input longint _in);
    return (_in << 1) ^ (_in >>> 63);
-endfunction : _zigzag64_to_longint
+endfunction : _longint_to_zigzag64
 
 function automatic bit encode_varint(input varint_t _varint,
                                      ref bytestream_t _stream,
@@ -63,7 +63,13 @@ endfunction : encode_message_key
 function automatic bit encode_type_string(input string _value,
                                           ref bytestream_t _stream,
                                           ref cursor_t _cursor);
-   return 1; // TODO implement
+   bit retval;
+   varint_t str_length = _value.len();
+   retval |= encode_varint(._varint(str_length), ._stream(_stream), ._cursor(_cursor));
+   foreach (_value[ii]) begin
+      _stream[_cursor++] = _value[ii];
+   end
+   return 0;
 endfunction : encode_type_string
 
 function automatic bit encode_type_int32(input int _value,
@@ -131,14 +137,14 @@ endfunction : encode_type_sfixed64
 function automatic bit encode_type_sint32(input int _value,
                                           ref bytestream_t _stream,
                                           ref cursor_t _cursor);
-   bit [31:0] zigzag = _int_to_zigzag(_value);
+   bit [31:0] zigzag = _int_to_zigzag32(_value);
    return _insert_32_bits(._value(zigzag), ._stream(_stream), ._cursor(_cursor));
 endfunction : encode_type_sint32
 
 function automatic bit encode_type_sint64(input longint _value,
                                           ref bytestream_t _stream,
                                           ref cursor_t _cursor);
-   bit [63:0] zigzag = _longint_to_zigzag(_value);
+   bit [63:0] zigzag = _longint_to_zigzag64(_value);
    return _insert_64_bits(._value(zigzag), ._stream(_stream), ._cursor(_cursor));
 endfunction : encode_type_sint64
 
