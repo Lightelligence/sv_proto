@@ -408,30 +408,23 @@ def generate_code(request, response):
                 for f in sv_fields:
                     pkg.append(f"          {f.name}__field_number: begin")
                     # FIXME add assertions that appropriate wire_type was received if not delimited
+                    result_var = f.name
+                    if f.sv_queue:
+                        result_var = f"tmp_{f.name}"
+                        pkg.append(f"            {f.sv_type} {result_var};")
+
                     if f.type == FieldDescriptorProto.TYPE_MESSAGE:
-                        result_var = f.name
-                        if f.sv_queue:
-                            result_var = f"tmp_{f.name}"
-                            pkg.append(f"            {f.sv_type} {result_var};")
                         pkg.append(f"            assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
                         pkg.append(f"            {result_var} = {f.sv_type}::type_id::create();")
                         pkg.append(f"            {result_var}._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + delimited_length));")
                         if f.sv_queue:
                             pkg.append(f"            this.{f.name}.push_back({result_var});")
                     elif f.type == FieldDescriptorProto.TYPE_STRING:
-                        result_var = f.name
-                        if f.sv_queue:
-                            result_var = f"tmp_{f.name}"
-                            pkg.append(f"            {f.sv_type} {result_var};")
                         pkg.append(f"            assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
                         pkg.append(f"            assert (!{PB_PKG}::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));")
                         if f.sv_queue:
                             pkg.append(f"            this.{f.name}.push_back({result_var});")
                     else:
-                        result_var = f.name
-                        if f.sv_queue:
-                            result_var = f"tmp_{f.name}"
-                            pkg.append(f"            {f.sv_type} {result_var};")
                         pkg.append(f"            do begin")
                         pkg.append(f"              assert (!{PB_PKG}::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
                         if f.sv_queue:
