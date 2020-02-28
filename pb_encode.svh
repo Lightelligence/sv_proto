@@ -7,7 +7,7 @@ function automatic void _bytestream_queue_to_dynamic_array(ref bytestream_t _out
    _out = {>>{_in}};
 endfunction : _bytestream_queue_to_dynamic_array
 
-function automatic queue_extend(ref enc_bytestream_t _modify, ref enc_bytestream_t _discard);
+function automatic void queue_extend(ref enc_bytestream_t _modify, ref enc_bytestream_t _discard);
    foreach (_discard[ii]) begin
       _modify.push_back(_discard[ii]);
    end
@@ -37,23 +37,23 @@ function longint unsigned _longint_to_zigzag64(input longint _in);
    return (_in << 1) ^ (_in >>> 63);
 endfunction : _longint_to_zigzag64
 
-function automatic void encode_varint(input varint_t _varint,
+function automatic void encode_varint(input varint_t _value,
                                      ref enc_bytestream_t _stream);
    do begin
-      byte current = _varint & 8'h7f;
-      _varint >>= 7;
-      if (_varint) begin
+      byte current = _value & 8'h7f;
+      _value >>= 7;
+      if (_value) begin
          current |= 8'h80;
       end
       _stream.push_back(current);
-   end while (_varint);
+   end while (_value);
 endfunction : encode_varint
 
 function automatic void encode_message_key(input field_number_t _field_number,
                                           input wire_type_t _wire_type,
                                           ref enc_bytestream_t _stream);
    varint_t varint = (_field_number << 3) | _wire_type;
-   encode_varint(._varint(varint), ._stream(_stream));
+   encode_varint(._value(varint), ._stream(_stream));
 endfunction : encode_message_key
 
 function automatic void encode_delimited(input field_number_t _field_number,
@@ -72,7 +72,7 @@ function automatic void encode_type_string(input string _value,
                                           ref enc_bytestream_t _stream);
    bit retval;
    varint_t str_length = _value.len();
-   retval |= encode_varint(._varint(str_length), ._stream(_stream));
+   retval |= encode_varint(._value(str_length), ._stream(_stream));
    foreach (_value[ii]) begin
       _stream.push_back(_value[ii]);
    end
@@ -80,22 +80,22 @@ endfunction : encode_type_string
 
 function automatic void encode_type_int32(input int _value,
                                          ref enc_bytestream_t _stream);
-   encode_varint(._varint(_value), ._stream(_stream));
+   encode_varint(._value(_value), ._stream(_stream));
 endfunction : encode_type_int32
 
 function automatic void encode_type_int64(input longint _value,
                                          ref enc_bytestream_t _stream);
-   encode_varint(._varint(_value), ._stream(_stream));
+   encode_varint(._value(_value), ._stream(_stream));
 endfunction : encode_type_int64
 
 function automatic void encode_type_uint32(input int unsigned _value,
                                           ref enc_bytestream_t _stream);
-   encode_varint(._varint(_value), ._stream(_stream));
+   encode_varint(._value(_value), ._stream(_stream));
 endfunction : encode_type_uint32
 
 function automatic void encode_type_uint64(input longint _value,
                                           ref enc_bytestream_t _stream);
-   encode_varint(._varint(_value), ._stream(_stream));
+   encode_varint(._value(_value), ._stream(_stream));
 endfunction : encode_type_uint64
 
 function automatic void encode_type_float(input shortreal _value,

@@ -31,14 +31,14 @@ endfunction : _zigzag64_to_longint
 // _stream is not modified, passed as ref for performance
 // _cursor is advanced to next unconsumed byte in stream
 // https://developers.google.com/protocol-buffers/docs/encoding#varints
-function automatic bit decode_varint(output varint_t _varint,
+function automatic bit decode_varint(output varint_t _value,
                                      ref bytestream_t _stream,
                                      ref cursor_t _cursor);
    int bit_counter = 0;
-   _varint = 0;
+   _value = 0;
    for (int unsigned ii=0; ii < MAX_VARINT_BYTES; ii++) begin
       byte current_byte = _stream[_cursor++];
-      _varint |= (current_byte & 8'h7f) << bit_counter;
+      _value |= (current_byte & 8'h7f) << bit_counter;
       if (current_byte[7] == 0) begin
          return 0;
       end
@@ -54,7 +54,7 @@ function automatic bit decode_message_key(output field_number_t _field_number,
                                           ref cursor_t _cursor);
    varint_t varint;
    bit                                           retval = 0;
-   retval = decode_varint(._varint(varint), ._stream(_stream), ._cursor(_cursor));
+   retval = decode_varint(._value(varint), ._stream(_stream), ._cursor(_cursor));
    _field_number = varint >> 3;
    _wire_type = varint & 3'b111;
    return retval;
@@ -69,7 +69,7 @@ function automatic bit decode_type_string(output string _result,
    varint_t str_length;
    bit                                                  retval = 0;
    if (_str_length == -1) begin
-      retval |= decode_varint(._varint(str_length), ._stream(_stream), ._cursor(_cursor));
+      retval |= decode_varint(._value(str_length), ._stream(_stream), ._cursor(_cursor));
    end
    else begin
       str_length = _str_length;
@@ -88,25 +88,25 @@ endfunction : decode_type_string
 function automatic bit decode_type_int32(output int _result,
                                          ref bytestream_t _stream,
                                          ref cursor_t _cursor);
-   return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
+   return decode_varint(._value(_result), ._stream(_stream), ._cursor(_cursor));
 endfunction : decode_type_int32
 
 function automatic bit decode_type_int64(output longint _result,
                                          ref bytestream_t _stream,
                                          ref cursor_t _cursor);
-   return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
+   return decode_varint(._value(_result), ._stream(_stream), ._cursor(_cursor));
 endfunction : decode_type_int64
 
 function automatic bit decode_type_uint32(output int unsigned _result,
                                           ref bytestream_t _stream,
                                           ref cursor_t _cursor);
-   return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
+   return decode_varint(._value(_result), ._stream(_stream), ._cursor(_cursor));
 endfunction : decode_type_uint32
 
 function automatic bit decode_type_uint64(output longint _result,
                                           ref bytestream_t _stream,
                                           ref cursor_t _cursor);
-   return decode_varint(._varint(_result), ._stream(_stream), ._cursor(_cursor));
+   return decode_varint(._value(_result), ._stream(_stream), ._cursor(_cursor));
 endfunction : decode_type_uint64
 
 
@@ -185,14 +185,14 @@ function automatic bit decode_and_consume_unknown(input wire_type_t _wire_type,
      0: begin
         // Varint variable size, decode and don't use value
         varint_t unused;
-        retval |= decode_varint(._varint(unused), ._stream(_stream), ._cursor(_cursor));
+        retval |= decode_varint(._value(unused), ._stream(_stream), ._cursor(_cursor));
      end
      1: begin
         _cursor += 8;
      end
      2: begin
         if (_wire_type_2_length == -1) begin
-           retval |= decode_varint(._varint(_wire_type_2_length), ._stream(_stream), ._cursor(_cursor));
+           retval |= decode_varint(._value(_wire_type_2_length), ._stream(_stream), ._cursor(_cursor));
         end
         _cursor += _wire_type_2_length;
      end

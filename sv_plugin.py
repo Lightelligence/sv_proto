@@ -382,7 +382,7 @@ def generate_code(request, response):
                 pkg.append("                                            ._stream(_stream),")
                 pkg.append("                                            ._cursor(_cursor)));")
                 pkg.append("        if (wire_type == 2) begin")
-                pkg.append("            assert (!pb_pkg::decode_varint(._varint(wire_type_2_length),")
+                pkg.append("            assert (!pb_pkg::decode_varint(._value(wire_type_2_length),")
                 pkg.append("                                           ._stream(_stream),")
                 pkg.append("                                           ._cursor(_cursor)));")
                 pkg.append("            packed_stop = _cursor + wire_type_2_length;")
