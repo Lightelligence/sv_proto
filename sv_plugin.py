@@ -301,7 +301,7 @@ def generate_code(request, response):
                 pkg.append("    endfunction : new")
                 pkg.append("")
                 pkg.append("    function void serialize(ref pb_pkg::bytestream_t _stream);")
-                pkg.append("      pb_pkg::enc_stream_t enc_stream;")
+                pkg.append("      pb_pkg::enc_bytestream_t enc_stream;")
                 pkg.append("      this._serialize(._stream(enc_stream));")
                 pkg.append("      assert (!pb_pkg::_bytestream_queue_to_dynamic_array(._out(_stream), ._in(enc_stream)));")
                 pkg.append("    endfunction : serialize")
@@ -340,7 +340,7 @@ def generate_code(request, response):
                     else:
                         if f.options.packed: # Packed implies repeated?
                             pkg.append(f"      begin")
-                            pkg.append(f"        pb_pkg::enc_stream_t sub_stream;")
+                            pkg.append(f"        pb_pkg::enc_bytestream_t sub_stream;")
                             pkg.append(f"        foreach (this.{f.name}[ii]) begin")
                             pkg.append(f"          pb_pkg::encode_{f.sv_xxcode_func}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
                             pkg.append(f"        end")
