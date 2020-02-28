@@ -70,9 +70,8 @@ endfunction : encode_delimited
 
 function automatic void encode_type_string(input string _value,
                                           ref enc_bytestream_t _stream);
-   bit retval;
    varint_t str_length = _value.len();
-   retval |= encode_varint(._value(str_length), ._stream(_stream));
+   encode_varint(._value(str_length), ._stream(_stream));
    foreach (_value[ii]) begin
       _stream.push_back(_value[ii]);
    end
