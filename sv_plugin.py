@@ -468,6 +468,7 @@ def generate_code(request, response):
                         else:
                             # TODO
                             # What about strings and floats?
+                            # What about rand_mode(0) fields?
                             pkg.append(f"      this.{f.name}__is_initialized = 1;")
                 pkg.append("    endfunction : post_randomize")
 
