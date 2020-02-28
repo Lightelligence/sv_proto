@@ -21,7 +21,15 @@ package pb_pkg;
    typedef int unsigned     cursor_t;
    typedef longint unsigned varint_t;
    typedef int unsigned     field_number_t;
-   typedef int unsigned     wire_type_t;
+   typedef enum int unsigned {
+                 WIRE_TYPE_VARINT = 0,
+                 WIRE_TYPE_64BIT = 1,
+                 WIRE_TYPE_DELIMITED = 2,
+                 //WIRE_TYPE_START_GROUP = 3,
+                 //WIRE_TYPE_END_GROUP = 4,
+                 WIRE_TYPE_32BIT = 5
+                 } wire_type_t;
+
 
    typedef enum {
                  LABEL_OPTIONAL = 1,

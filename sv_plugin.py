@@ -32,12 +32,12 @@ PB_TYPE_NUMBER_TO_PB_TYPE = {
     FieldDescriptorProto.TYPE_UINT64   : 'TYPE_UINT64',
 }
 
-WIRE_TYPE_VARINT = 0
-WIRE_TYPE_64BIT = 1
-WIRE_TYPE_DELIMITED = 2
-#WIRE_TYPE_START_GROUP = 3
-#WIRE_TYPE_END_GROUP = 4
-WIRE_TYPE_32BIT = 5
+WIRE_TYPE_VARINT = "WIRE_TYPE_VARINT"
+WIRE_TYPE_64BIT = "WIRE_TYPE_64BIT"
+WIRE_TYPE_DELIMITED = "WIRE_TYPE_DELIMITED"
+#WIRE_TYPE_START_GROUP = "WIRE_TYPE_START_GROUP"
+#WIRE_TYPE_END_GROUP = "WIRE_TYPE_END_GROUP"
+WIRE_TYPE_32BIT = "WIRE_TYPE_32BIT"
 
 # FIXME looking at this, bytes are being handled inappropriately as a single byte, not as an array of bytes
 # 0	Varint	int32, int64, uint32, uint64, sint32, sint64, bool, enum
@@ -288,13 +288,16 @@ def generate_code(request, response):
 
                 for f in sv_fields:
                     pkg.append(f"    {f.sv_rand}{f.sv_type} {f.name}{f.sv_queue};")
-
                 pkg.append("")
 
                 for f in sv_fields:
-                    pkg.append(f"    local const pb_pkg::label_e label__{f.name} = pb_pkg::{f.sv_label};")
-
+                    pkg.append(f"    local const pb_pkg::field_number_t {f.name}__field_number = {f.number};")
                 pkg.append("")
+
+                for f in sv_fields:
+                    pkg.append(f"    local const pb_pkg::label_e {f.name}__label = pb_pkg::{f.sv_label};")
+                pkg.append("")
+
                 pkg.append(f"    `uvm_object_utils_begin({item.name})")
                 for f in sv_fields:
                         pkg.append(f"      {f.sv_field_macro}({f.sv_field_macro_args})")
@@ -336,7 +339,7 @@ def generate_code(request, response):
                             # FIXME skip if optional
                             pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
                         pkg.append(f"        pb_pkg::encode_message_key(._field_number({f.number}),")
-                        pkg.append(f"                                   ._wire_type(2),")
+                        pkg.append(f"                                   ._wire_type(pb_pkg::WIRE_TYPE_DELIMITED),")
                         pkg.append(f"                                   ._stream(_stream));")
                         pkg.append(f"        pb_pkg::encode_type_string(._value(tmp),")
                         pkg.append(f"                                   ._stream(_stream));")
@@ -393,7 +396,7 @@ def generate_code(request, response):
                 pkg.append("        end")
                 pkg.append("        case (field_number)")
                 for f in sv_fields:
-                    pkg.append(f"          {f.number}: begin")
+                    pkg.append(f"          {f.name}__field_number: begin")
                     # FIXME add assertions that appropriate wire_type was received if not delimited
                     if f.type == FieldDescriptorProto.TYPE_MESSAGE:
                         result_var = f.name

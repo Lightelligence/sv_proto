@@ -56,7 +56,7 @@ function automatic bit decode_message_key(output field_number_t _field_number,
    bit                                           retval = 0;
    retval = decode_varint(._value(varint), ._stream(_stream), ._cursor(_cursor));
    _field_number = varint >> 3;
-   _wire_type = varint & 3'b111;
+   _wire_type = wire_type_t'(varint & 3'b111);
    return retval;
 endfunction : decode_message_key
 

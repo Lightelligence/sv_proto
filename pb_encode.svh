@@ -60,7 +60,7 @@ function automatic void encode_delimited(input field_number_t _field_number,
                                         ref enc_bytestream_t _delimited_stream,
                                         ref enc_bytestream_t _stream);
    encode_message_key(._field_number(_field_number),
-                      ._wire_type(2),
+                      ._wire_type(WIRE_TYPE_DELIMITED),
                       ._stream(_stream));
    pb_pkg::encode_varint(._value(_delimited_stream.size()),
                          ._stream(_stream));
