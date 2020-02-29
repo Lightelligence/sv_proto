@@ -85,6 +85,12 @@ function automatic bit decode_type_string(output string _result,
    return 0;
 endfunction : decode_type_string
 
+function automatic bit decode_type_bool(output bit _result,
+                                         ref bytestream_t _stream,
+                                         ref cursor_t _cursor);
+   return decode_varint(._value(_result), ._stream(_stream), ._cursor(_cursor));
+endfunction : decode_type_bool
+
 function automatic bit decode_type_int32(output int _result,
                                          ref bytestream_t _stream,
                                          ref cursor_t _cursor);

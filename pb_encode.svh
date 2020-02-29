@@ -77,6 +77,11 @@ function automatic void encode_type_string(input string _value,
    end
 endfunction : encode_type_string
 
+function automatic void encode_type_bool(input bit _value,
+                                         ref enc_bytestream_t _stream);
+   encode_varint(._value(_value), ._stream(_stream));
+endfunction : encode_type_bool
+
 function automatic void encode_type_int32(input int _value,
                                          ref enc_bytestream_t _stream);
    encode_varint(._value(_value), ._stream(_stream));
