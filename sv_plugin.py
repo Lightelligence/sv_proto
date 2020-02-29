@@ -440,7 +440,14 @@ def generate_code(request, response):
                     else:
                         pkg.append(f"            assert ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) || (wire_type == {PB_PKG}::{f.sv_wire_type}));")
                         pkg.append(f"            do begin")
+                        if f.type == FieldDescriptorProto.TYPE_ENUM:
+                            pkg.append(f"              {PB_PKG}::varint_t tmp_varint;")
+                            result_var_enum = result_var
+                            result_var = "tmp_varint"
                         pkg.append(f"              assert (!{PB_PKG}::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
+                        if f.type == FieldDescriptorProto.TYPE_ENUM:
+                            result_var = result_var_enum
+                            pkg.append(f"            {result_var} = {f.sv_type}'(tmp_varint);")
                         if f.sv_queue:
                             pkg.append(f"              this.{f.name}.push_back({result_var});")
                         pkg.append(f"            end while ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));")
