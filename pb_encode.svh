@@ -82,6 +82,11 @@ function automatic void encode_type_bool(input bit _value,
    encode_varint(._value(_value), ._stream(_stream));
 endfunction : encode_type_bool
 
+function automatic void encode_type_enum(input varint_t _value,
+                                         ref enc_bytestream_t _stream);
+   encode_varint(._value(_value), ._stream(_stream));
+endfunction : encode_type_enum
+
 function automatic void encode_type_int32(input int _value,
                                          ref enc_bytestream_t _stream);
    encode_varint(._value(_value), ._stream(_stream));
