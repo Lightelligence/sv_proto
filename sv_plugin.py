@@ -261,7 +261,7 @@ class SVFieldDescriptorProto():
     @property
     def sv_field_macro_args(self):
         if self.type == FieldDescriptorProto.TYPE_ENUM:
-            return f"{self.sv_type}, {self.name}, UVM_ALL_ON)"
+            return f"{self.sv_type}, {self.name}, UVM_ALL_ON"
         else:
             return f"{self.name}, UVM_ALL_ON"
 
