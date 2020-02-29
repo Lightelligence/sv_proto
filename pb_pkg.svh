@@ -16,6 +16,7 @@ Encoding documentation:
 `include "uvm_macros.svh"
 
 // TODO UVM doesn't provide macros for queues/arrays of reals
+// This a major caveat, because these won't be compared or printed.
 `define uvm_field_queue_real(ARG,FLAG)
 
 
