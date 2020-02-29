@@ -1,5 +1,12 @@
 syntax = "proto2";
 
+enum ExampleEnum {
+  VAL0 = 0;
+  VAL1 = 1;
+  VAL2 = 2;
+  VAL3 = 4;
+}
+
 // Test every type and permutations
 message Hello {
 
@@ -67,4 +74,8 @@ message Hello {
   required uint64 uint64_1 = 50;
   repeated uint64 uint64_2 = 51;
   repeated uint64 uint64_3 = 52 [packed=true];
+
+  optional ExampleEnum exampleenum_0 = 53;
+  required ExampleEnum exampleenum_1 = 54;
+  repeated ExampleEnum exampleenum_2 = 55;
 }

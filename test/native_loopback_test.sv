@@ -29,6 +29,7 @@ function automatic void test();
          uint32_3.size() == 48;
          uint64_2.size() == 51;
          uint64_3.size() == 52;
+         exampleenum_2.size() == 7;
          });
       //src.print();
       src.serialize(stream);
