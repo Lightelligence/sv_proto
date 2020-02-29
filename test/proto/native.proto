@@ -78,4 +78,8 @@ message Hello {
   optional ExampleEnum exampleenum_0 = 53;
   required ExampleEnum exampleenum_1 = 54;
   repeated ExampleEnum exampleenum_2 = 55;
+
+  optional string string_0 = 56;
+  required string string_1 = 57;
+  repeated string string_2 = 58;
 }

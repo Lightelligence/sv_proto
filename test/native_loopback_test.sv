@@ -6,6 +6,12 @@ function automatic void test();
       Hello src = Hello::type_id::create("src");
       Hello dest = Hello::type_id::create("dest");
 
+      src.string_0 = "I'm stringicus!";
+      src.string_1 = "No, I'm stringicus!";
+      for (int ii=0; ii < 12; ii++) begin
+         src.string_2.push_back($sformatf("No, I'm stringicus(%0d)!",  ii));
+      end
+      
       assert(src.randomize() with {
          bool_2.size() == 3;
          bool_3.size() == 4;
