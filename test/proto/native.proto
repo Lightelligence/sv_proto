@@ -1,18 +1,70 @@
 syntax = "proto2";
 
-// This example is intended to test a single message with native types
-
-message Foobar {
-  required string fudge = 1;
-}
-
+// Test every type and permutations
 message Hello {
-  required string name = 1;
-  optional int32 age = 2;
-  optional uint32 old_age = 3;
-  repeated uint64 dinosaur_age = 6 [packed=true];
-  required sint64 maybe_negative = 7;
-  required float mean = 4;
-  optional double avg = 5;
-  required Foobar foobar = 12;
+
+  optional bool bool_0 = 1;
+  required bool bool_1 = 2;
+  repeated bool bool_2 = 3;
+  repeated bool bool_3 = 4 [packed=true];
+
+  optional double double_0 = 5;
+  required double double_1 = 6;
+  repeated double double_2 = 7;
+  repeated double double_3 = 8 [packed=true];
+
+  optional fixed32 fixed32_0 = 9;
+  required fixed32 fixed32_1 = 10;
+  repeated fixed32 fixed32_2 = 11;
+  repeated fixed32 fixed32_3 = 12 [packed=true];
+
+  optional fixed64 fixed64_0 = 13;
+  required fixed64 fixed64_1 = 14;
+  repeated fixed64 fixed64_2 = 15;
+  repeated fixed64 fixed64_3 = 16 [packed=true];
+
+  optional float float_0 = 17;
+  required float float_1 = 18;
+  repeated float float_2 = 19;
+  repeated float float_3 = 20 [packed=true];
+
+  optional int32 int32_0 = 21;
+  required int32 int32_1 = 22;
+  repeated int32 int32_2 = 23;
+  repeated int32 int32_3 = 24 [packed=true];
+
+  optional int64 int64_0 = 25;
+  required int64 int64_1 = 26;
+  repeated int64 int64_2 = 27;
+  repeated int64 int64_3 = 28 [packed=true];
+
+  optional sfixed32 sfixed32_0 = 29;
+  required sfixed32 sfixed32_1 = 30;
+  repeated sfixed32 sfixed32_2 = 31;
+  repeated sfixed32 sfixed32_3 = 32 [packed=true];
+
+  optional sfixed64 sfixed64_0 = 33;
+  required sfixed64 sfixed64_1 = 34;
+  repeated sfixed64 sfixed64_2 = 35;
+  repeated sfixed64 sfixed64_3 = 36 [packed=true];
+
+  optional sint32 sint32_0 = 37;
+  required sint32 sint32_1 = 38;
+  repeated sint32 sint32_2 = 39;
+  repeated sint32 sint32_3 = 40 [packed=true];
+
+  optional sint64 sint64_0 = 41;
+  required sint64 sint64_1 = 42;
+  repeated sint64 sint64_2 = 43;
+  repeated sint64 sint64_3 = 44 [packed=true];
+
+  optional uint32 uint32_0 = 45;
+  required uint32 uint32_1 = 46;
+  repeated uint32 uint32_2 = 47;
+  repeated uint32 uint32_3 = 48 [packed=true];
+
+  optional uint64 uint64_0 = 49;
+  required uint64 uint64_1 = 50;
+  repeated uint64 uint64_2 = 51;
+  repeated uint64 uint64_3 = 52 [packed=true];
 }

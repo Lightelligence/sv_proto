@@ -4,7 +4,6 @@ load(":test.bzl", "golden_test_glob")
 
 golden_test_glob(glob(["proto/*.proto"]))
 
-
 sh_test(
     name = "pb_pkg_test",
     size = "small",
@@ -24,22 +23,8 @@ py_proto_library(
     srcs = ["proto/native.proto"],
 )
 
-py_binary(
-    name = "gen_native_encode_test",
-    srcs = ["gen_native_encode_test.py"],
-    deps = [":native_py_proto"],
-)
-
-genrule(
-    name = "native_encode_test_sv",
-    srcs = [],
-    outs = ["native_encode_test.sv"],
-    cmd = "$(location :gen_native_encode_test) > $(@)",
-    tools = [":gen_native_encode_test"],
-)
-
 sh_test(
-    name = "native_encode_test",
+    name = "native_loopback_test",
     size = "small",
     srcs = ["passthrough.sh"],
     data = [
@@ -47,8 +32,8 @@ sh_test(
         "//:pb_decode.svh",
         "//:pb_encode.svh",
         ":native",
-        ":native_encode_test_sv",
+        "native_loopback_test.sv",
     ],
-    args = ["xrun -licqueue -uvm $(locations //:pb_pkg.svh) $(location :native) $(location :native_encode_test_sv)"],
+    args = ["xrun -licqueue -uvm $(locations //:pb_pkg.svh) $(location :native) $(location native_loopback_test.sv)"],
     tags = ["xrun"],
 )
