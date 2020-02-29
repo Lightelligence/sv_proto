@@ -13,6 +13,12 @@ Encoding documentation:
   `define pb_real_rand
  `endif
 
+`include "uvm_macros.svh"
+
+// TODO UVM doesn't provide macros for queues/arrays of reals
+`define uvm_field_queue_real(ARG,FLAG)
+
+
 package pb_pkg;
 
    typedef byte             bytestream_t[];
