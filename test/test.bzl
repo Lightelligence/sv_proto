@@ -27,6 +27,8 @@ def golden_test(name):
         data = [
             ":{}".format(name),
             "//:pb_pkg.svh",
+            "//:pb_decode.svh",
+            "//:pb_encode.svh",
             ],
         args = ["xrun -uvm $(location //:pb_pkg.svh) $(location :{name})".format(name=name)],
         tags = ["xrun"],

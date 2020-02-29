@@ -10,7 +10,8 @@ sh_test(
     srcs = ["passthrough.sh"],
     data = [
         "//:pb_pkg.svh",
-        "//:pb",
+        "//:pb_decode.svh",
+        "//:pb_encode.svh",
         "pb_pkg_test.sv",
     ],
     args = ["xrun -licqueue -uvm $(locations //:pb_pkg.svh) $(location pb_pkg_test.sv)"],
