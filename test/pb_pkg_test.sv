@@ -7,7 +7,7 @@ function automatic void test_bytestream_conversion();
    for (int unsigned ii=0; ii<53; ii++) begin
       enc_stream.push_back(ii);
    end
-   assert(!_bytestream_queue_to_dynamic_array(._out(stream), ._in(enc_stream)));
+   _bytestream_queue_to_dynamic_array(._out(stream), ._in(enc_stream));
    foreach(enc_stream[ii]) begin
       assert (stream[ii] == enc_stream[ii]);
    end
@@ -36,10 +36,9 @@ function automatic void test_varint_encode();
    bytestream_t stream;
    cursor_t cursor = 0;
    varint_t result;
-   bit failure = encode_varint(223, enc_stream);
-   assert (failure == 0);
-   failure = _bytestream_queue_to_dynamic_array(._out(stream), ._in(enc_stream));
-   assert (failure == 0);
+   bit failure;
+   encode_varint(223, enc_stream);
+   _bytestream_queue_to_dynamic_array(._out(stream), ._in(enc_stream));
    failure = decode_varint(result, stream, cursor);
    assert (failure == 0);
    assert (result == 223) else $display("result: %0d", result);
@@ -51,13 +50,11 @@ function automatic void test_message_key_encode_decode();
    cursor_t cursor = 0;
    field_number_t field_number = 12;
    wire_type_e wire_type = WIRE_TYPE_DELIMITED;
-   bit failure = encode_message_key(field_number, wire_type, enc_stream);
-   assert (failure == 0);
-   failure = _bytestream_queue_to_dynamic_array(._out(stream), ._in(enc_stream));
-   assert (failure == 0);
+   bit failure;
+   encode_message_key(field_number, wire_type, enc_stream);
+   _bytestream_queue_to_dynamic_array(._out(stream), ._in(enc_stream));
    cursor = 0;
    field_number = 0;
-   wire_type = 0;
    failure = decode_message_key(field_number, wire_type, stream, cursor);
    assert (field_number == 12) else $display("field_number: %0d", field_number);
    assert (wire_type == WIRE_TYPE_DELIMITED) else $display("wire_type: %0d", wire_type);
@@ -72,8 +69,7 @@ function automatic void test_decode_string();
    assert (failure == 0);
    assert (result == "testing") else $display("result: %s", result);
    cursor = 0;
-   failure = encode_type_string(result, stream2);
-   assert (failure == 0);
+   encode_type_string(result, stream2);
    foreach (stream[xx]) begin
       assert (stream[xx] == stream2[xx]);
    end
