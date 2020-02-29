@@ -1,0 +1,33 @@
+* Caveats
+** Real Numbers
+*** Randomization
+    Not all simulators support real number randomization (or it requires a
+    separate license). As such, real numbers are not declared as `rand` by
+    default.
+
+    This behavior can be changed by throwing the following define during verilog compilation:
+#+BEGIN_SRC sh
+  +define+pb_real_rand=rand
+#+END_SRC
+*** Queues
+   UVM does not provide object field macros for queues of type real. The pb_pkg creates an empty placeholder macro:
+#+BEGIN_SRC verilog
+  `define uvm_field_queue_real(ARG,FLAG)
+#+END_SRC
+   However, the functionality enabled by object field macros is not
+   implemented. Thus, real number queues will not print, pack/unpack, or
+   compare, etc.
+** Protocol Buffer Features Not Supported
+*** Groups
+    Groups have been deprecated in the protocol buffer specifcation.
+*** Enum `allow_alias` option
+    The allow_alias option on enums will create illegal enumerations in
+    SystemVerilog as for a given enumeration type, each enumeration constant
+    must have a unique value.
+** Initialization of Required Fields
+   To make randomization as easy as possible, class members do not use the
+   `local` modifer or setters and getters. This makes it impossible to make
+   know if a field has been manually initialized. If an object is randomized
+   or created from deserialization, all required field are marked as
+   initialized.
+
