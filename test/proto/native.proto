@@ -7,6 +7,12 @@ enum ExampleEnum {
   VAL3 = 4;
 }
 
+message SubMessage {
+  required ExampleEnum sub_enum = 1;
+  optional double tree_hotel = 2;
+  repeated uint32 some_number = 3;
+}
+
 // Test every type and permutations
 message Hello {
 
@@ -82,4 +88,8 @@ message Hello {
   optional string string_0 = 56;
   required string string_1 = 57;
   repeated string string_2 = 58;
+
+  optional SubMessage submessage_0 = 59;
+  required SubMessage submessage_1 = 60;
+  repeated SubMessage submessage_2 = 61;
 }

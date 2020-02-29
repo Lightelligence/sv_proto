@@ -11,6 +11,12 @@ function automatic void test();
       for (int ii=0; ii < 12; ii++) begin
          src.string_2.push_back($sformatf("No, I'm stringicus(%0d)!",  ii));
       end
+
+      src.submessage_0 = SubMessage::type_id::create("submessage_0");
+      src.submessage_1 = SubMessage::type_id::create("submessage_0");
+      for (int ii=0; ii < 5; ii++) begin
+         src.submessage_2.push_back(SubMessage::type_id::create($sformatf("submessage_%0d", ii)));
+      end
       
       assert(src.randomize() with {
          bool_2.size() == 3;

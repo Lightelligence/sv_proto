@@ -452,7 +452,8 @@ def generate_code(request, response):
                             pkg.append(f"              this.{f.name}.push_back({result_var});")
                         pkg.append(f"            end while ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));")
                     if f.label == f.LABEL_REQUIRED:
-                        pkg.append(f"            this.{f.name}__is_initialized = 1;")
+                        if f.type != FieldDescriptorProto.TYPE_MESSAGE:
+                            pkg.append(f"            this.{f.name}__is_initialized = 1;")
                     pkg.append(f"          end")
 
                 pkg.append(f"          default : assert (!{PB_PKG}::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));")
@@ -471,6 +472,7 @@ def generate_code(request, response):
                         if f.type == FieldDescriptorProto.TYPE_MESSAGE:
                             pkg.append(f"      if (this.{f.name} == null) begin")
                             pkg.append(f"        return 0;")
+                            pkg.append(f"      end")
                             pkg.append(f"      else begin")
                             pkg.append(f"        is_initialized &= this.{f.name}.is_initialized();")
                             pkg.append(f"      end")
@@ -484,7 +486,8 @@ def generate_code(request, response):
                         # TODO
                         # What about strings and floats?
                         # What about rand_mode(0) fields?
-                        pkg.append(f"      this.{f.name}__is_initialized = 1;")
+                        if f.type != FieldDescriptorProto.TYPE_MESSAGE:
+                            pkg.append(f"      this.{f.name}__is_initialized = 1;")
                 pkg.append("    endfunction : post_randomize")
 
                 pkg.append("")
