@@ -389,7 +389,7 @@ def generate_code(request, response):
                                 # FIXME skip if optional
                                 pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
                             pkg.append(f"        {PB_PKG}::encode_message_key(._field_number(this.{f.sv_number}),")
-                            pkg.append(f"                                   ._wire_type({f.sv_wire_type}),")
+                            pkg.append(f"                                   ._wire_type({PB_PKG}::{f.sv_wire_type}),")
                             pkg.append(f"                                   ._stream(_stream));")
                             pkg.append(f"        {PB_PKG}::{f.sv_encode_func}(._value(tmp), ._stream(_stream));")
                             pkg.append("      end")
