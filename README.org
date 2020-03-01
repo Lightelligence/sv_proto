@@ -21,8 +21,8 @@
     SystemVerilog as for a given enumeration type, each enumeration constant
     must have a unique value.
 *** Repated `bytes` fields lack uvm field macros
-   UVM does not provide object field macros for nested arrays. Thus, these
-   fields will not print, pack/unpack, or compare, copy, etc.
+    UVM does not provide object field macros for nested arrays. Thus, these
+    fields will not print, pack/unpack, or compare, copy, etc.
 ** Initialization of Required Fields
    To make randomization as easy as possible, class members do not use the
    `local` modifier or setters and getters. This makes it impossible to make
