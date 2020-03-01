@@ -72,7 +72,7 @@ PB_TYPE_NUMBER_TO_WIRE_TYPE = {
 
 PB_TYPE_NUMBER_TO_SV_TYPE = {
     FieldDescriptorProto.TYPE_BOOL     : 'bit',
-    FieldDescriptorProto.TYPE_BYTES    : 'byte',
+    FieldDescriptorProto.TYPE_BYTES    : 'pb_pkg::bytestream_t',
     FieldDescriptorProto.TYPE_DOUBLE   : 'real',
     FieldDescriptorProto.TYPE_ENUM     : 'enum',
     FieldDescriptorProto.TYPE_FIXED32  : 'int unsigned',
@@ -92,24 +92,45 @@ PB_TYPE_NUMBER_TO_SV_TYPE = {
 }    
 
 PB_TYPE_NUMBER_TO_UVM_FIELD_MACRO = {
-    FieldDescriptorProto.TYPE_BOOL    : 'int',
-    FieldDescriptorProto.TYPE_BYTES   : 'int',
-    FieldDescriptorProto.TYPE_DOUBLE  : 'real',
-    FieldDescriptorProto.TYPE_ENUM    : 'enum',
-    FieldDescriptorProto.TYPE_FIXED32 : 'int',
-    FieldDescriptorProto.TYPE_FIXED64 : 'int',
-    FieldDescriptorProto.TYPE_FLOAT   : 'real',
-   #FieldDescriptorProto.TYPE_GROUP   : '',
-    FieldDescriptorProto.TYPE_INT32   : 'int',
-    FieldDescriptorProto.TYPE_INT64   : 'int',
-    FieldDescriptorProto.TYPE_MESSAGE : 'object',
-    FieldDescriptorProto.TYPE_SFIXED32: 'int',
-    FieldDescriptorProto.TYPE_SFIXED64: 'int',
-    FieldDescriptorProto.TYPE_SINT32  : 'int',
-    FieldDescriptorProto.TYPE_SINT64  : 'int',
-    FieldDescriptorProto.TYPE_STRING  : 'string',
-    FieldDescriptorProto.TYPE_UINT32  : 'int',
-    FieldDescriptorProto.TYPE_UINT64  : 'int',
+    FieldDescriptorProto.TYPE_BOOL    : 'uvm_field_int',
+    FieldDescriptorProto.TYPE_BYTES   : 'uvm_field_array_int',
+    FieldDescriptorProto.TYPE_DOUBLE  : 'uvm_field_real',
+    FieldDescriptorProto.TYPE_ENUM    : 'uvm_field_enum',
+    FieldDescriptorProto.TYPE_FIXED32 : 'uvm_field_int',
+    FieldDescriptorProto.TYPE_FIXED64 : 'uvm_field_int',
+    FieldDescriptorProto.TYPE_FLOAT   : 'uvm_field_real',
+  # FieldDescriptorProto.TYPE_GROUP   : '',
+    FieldDescriptorProto.TYPE_INT32   : 'uvm_field_int',
+    FieldDescriptorProto.TYPE_INT64   : 'uvm_field_int',
+    FieldDescriptorProto.TYPE_MESSAGE : 'uvm_field_object',
+    FieldDescriptorProto.TYPE_SFIXED32: 'uvm_field_int',
+    FieldDescriptorProto.TYPE_SFIXED64: 'uvm_field_int',
+    FieldDescriptorProto.TYPE_SINT32  : 'uvm_field_int',
+    FieldDescriptorProto.TYPE_SINT64  : 'uvm_field_int',
+    FieldDescriptorProto.TYPE_STRING  : 'uvm_field_string',
+    FieldDescriptorProto.TYPE_UINT32  : 'uvm_field_int',
+    FieldDescriptorProto.TYPE_UINT64  : 'uvm_field_int',
+}
+
+PB_TYPE_NUMBER_REPEATED_TO_UVM_FIELD_MACRO = {
+    FieldDescriptorProto.TYPE_BOOL    : 'uvm_field_queue_int',
+    FieldDescriptorProto.TYPE_BYTES   : '',
+    FieldDescriptorProto.TYPE_DOUBLE  : '',
+    FieldDescriptorProto.TYPE_ENUM    : 'uvm_field_queue_enum',
+    FieldDescriptorProto.TYPE_FIXED32 : 'uvm_field_queue_int',
+    FieldDescriptorProto.TYPE_FIXED64 : 'uvm_field_queue_int',
+    FieldDescriptorProto.TYPE_FLOAT   : '',
+  # FieldDescriptorProto.TYPE_GROUP   : '',
+    FieldDescriptorProto.TYPE_INT32   : 'uvm_field_queue_int',
+    FieldDescriptorProto.TYPE_INT64   : 'uvm_field_queue_int',
+    FieldDescriptorProto.TYPE_MESSAGE : 'uvm_field_queue_object',
+    FieldDescriptorProto.TYPE_SFIXED32: 'uvm_field_queue_int',
+    FieldDescriptorProto.TYPE_SFIXED64: 'uvm_field_queue_int',
+    FieldDescriptorProto.TYPE_SINT32  : 'uvm_field_queue_int',
+    FieldDescriptorProto.TYPE_SINT64  : 'uvm_field_queue_int',
+    FieldDescriptorProto.TYPE_STRING  : 'uvm_field_queue_string',
+    FieldDescriptorProto.TYPE_UINT32  : 'uvm_field_queue_int',
+    FieldDescriptorProto.TYPE_UINT64  : 'uvm_field_queue_int',
 }
 
 # See if type should be randomized
@@ -139,13 +160,6 @@ PB_LABEL_TO_ENUM = {
     FieldDescriptorProto.LABEL_REQUIRED : "LABEL_REQUIRED",
     FieldDescriptorProto.LABEL_REPEATED : "LABEL_REPEATED",
 }
-
-def map_uvm_field_macro(pb_type_number):
-    try:
-        return PB_TYPE_NUMBER_TO_UVM_FIELD_MACRO[pb_type_number]
-    except KeyError:
-        raise NotImplementedError(f"{PB_TYPE_NUMBER_TO_PB_TYPE[pb_type_number]} not supported in SV")
-
 
 class GeneratedPackage():
     def __init__(self, package_name):
@@ -252,11 +266,13 @@ class SVFieldDescriptorProto():
 
     @property
     def sv_field_macro(self):
-        if self.sv_queue:
-            queue = "_queue"
+        if self.label == self.LABEL_REPEATED:
+            macro_type = PB_TYPE_NUMBER_REPEATED_TO_UVM_FIELD_MACRO[self.type]
         else:
-            queue = ""
-        return f"`uvm_field{queue}_{map_uvm_field_macro(self.type)}"
+            macro_type = PB_TYPE_NUMBER_TO_UVM_FIELD_MACRO[self.type]
+        if macro_type == '':
+            return ""
+        return f"`{macro_type}({self.sv_field_macro_args})"
 
     @property
     def sv_field_macro_args(self):
@@ -324,7 +340,7 @@ def generate_code(request, response):
 
                 pkg.append(f"    `uvm_object_utils_begin({item.name})")
                 for f in sv_fields:
-                        pkg.append(f"      {f.sv_field_macro}({f.sv_field_macro_args})")
+                        pkg.append(f"      {f.sv_field_macro}")
                 pkg.append("    `uvm_object_utils_end")
                 pkg.append("")
                 pkg.append(f"    function new(string name=\"{item.name}\");")
@@ -355,7 +371,7 @@ def generate_code(request, response):
                         pkg.append(f"                                 ._delimited_stream(sub_stream),")
                         pkg.append(f"                                 ._stream(_stream));")
                         pkg.append(f"      end")
-                    elif f.type == FieldDescriptorProto.TYPE_STRING:
+                    elif f.type in [f.TYPE_STRING, f.TYPE_BYTES]:
                         if f.sv_queue:
                             pkg.append(f"      foreach (this.{f.name}[ii]) begin")
                             pkg.append(f"        {f.sv_type} tmp = this.{f.name}[ii];")
@@ -366,7 +382,7 @@ def generate_code(request, response):
                         pkg.append(f"        {PB_PKG}::encode_message_key(._field_number(this.{f.sv_number}),")
                         pkg.append(f"                                   ._wire_type({PB_PKG}::WIRE_TYPE_DELIMITED),")
                         pkg.append(f"                                   ._stream(_stream));")
-                        pkg.append(f"        {PB_PKG}::encode_type_string(._value(tmp),")
+                        pkg.append(f"        {PB_PKG}::{f.sv_encode_func}(._value(tmp),")
                         pkg.append(f"                                   ._stream(_stream));")
                         pkg.append(f"      end")
                     else:
@@ -432,7 +448,7 @@ def generate_code(request, response):
                         pkg.append(f"            {result_var}._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + delimited_length));")
                         if f.sv_queue:
                             pkg.append(f"            this.{f.name}.push_back({result_var});")
-                    elif f.type == FieldDescriptorProto.TYPE_STRING:
+                    elif f.type in [f.TYPE_STRING, f.TYPE_BYTES]:
                         pkg.append(f"            assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
                         pkg.append(f"            assert (!{PB_PKG}::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));")
                         if f.sv_queue:

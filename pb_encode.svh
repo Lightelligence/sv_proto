@@ -77,6 +77,15 @@ function automatic void encode_type_string(input string _value,
    end
 endfunction : encode_type_string
 
+function automatic void encode_type_bytes(input bytestream_t _value,
+                                          ref enc_bytestream_t _stream);
+   varint_t str_length = _value.size();
+   encode_varint(._value(str_length), ._stream(_stream));
+   foreach (_value[ii]) begin
+      _stream.push_back(_value[ii]);
+   end
+endfunction : encode_type_bytes
+
 function automatic void encode_type_bool(input bit _value,
                                          ref enc_bytestream_t _stream);
    encode_varint(._value(_value), ._stream(_stream));

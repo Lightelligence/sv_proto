@@ -85,6 +85,25 @@ function automatic bit decode_type_string(output string _result,
    return 0;
 endfunction : decode_type_string
 
+function automatic bit decode_type_bytes(output bytestream_t _result,
+                                         ref bytestream_t _stream,
+                                         ref cursor_t _cursor,
+                                         input longint _str_length=-1);
+   varint_t str_length;
+   bit                                                  retval = 0;
+   if (_str_length == -1) begin
+      retval |= decode_varint(._value(str_length), ._stream(_stream), ._cursor(_cursor));
+   end
+   else begin
+      str_length = _str_length;
+   end
+   _result = new[str_length];
+   for (int unsigned ii=0; ii < str_length; ii++) begin
+      _result[ii] = _stream[_cursor++];
+   end
+   return 0;
+endfunction : decode_type_bytes
+
 function automatic bit decode_type_bool(output bit _result,
                                          ref bytestream_t _stream,
                                          ref cursor_t _cursor);

@@ -92,4 +92,8 @@ message Hello {
   optional SubMessage submessage_0 = 59;
   required SubMessage submessage_1 = 60;
   repeated SubMessage submessage_2 = 61;
+
+  optional bytes bytes_0 = 62;
+  required bytes bytes_1 = 63;
+  repeated bytes bytes_2 = 64;
 }

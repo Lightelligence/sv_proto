@@ -17,7 +17,7 @@ function automatic void test();
       for (int ii=0; ii < 5; ii++) begin
          src.submessage_2.push_back(SubMessage::type_id::create($sformatf("submessage_%0d", ii)));
       end
-      
+
       assert(src.randomize() with {
          bool_2.size() == 3;
          bool_3.size() == 4;
@@ -42,6 +42,7 @@ function automatic void test();
          uint64_2.size() == 51;
          uint64_3.size() == 52;
          exampleenum_2.size() == 7;
+         bytes_0.size() == 3;
          });
       //src.print();
       src.serialize(stream);
