@@ -30,4 +30,7 @@
    know if a field has been manually initialized. If an object is randomized
    or created from deserialization, all required field are marked as
    initialized.
-
+*** `oneof` may not work correctly
+    The previously mentioned about required fields means that multiple fields
+    in a oneof may be serialized which could cause errors in parsers in different
+    languages when deserializing.
