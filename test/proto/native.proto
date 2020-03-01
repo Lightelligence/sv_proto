@@ -41,8 +41,8 @@ message Hello {
   repeated float float_2 = 19;
   repeated float float_3 = 20 [packed=true];
 
-  optional int32 int32_0 = 21;
-  required int32 int32_1 = 22;
+  optional int32 int32_0 = 21 [default=-3];
+  required int32 int32_1 = 22 [default=-5];
   repeated int32 int32_2 = 23;
   repeated int32 int32_3 = 24 [packed=true];
 
@@ -81,11 +81,11 @@ message Hello {
   repeated uint64 uint64_2 = 51;
   repeated uint64 uint64_3 = 52 [packed=true];
 
-  optional ExampleEnum exampleenum_0 = 53;
+  optional ExampleEnum exampleenum_0 = 53 [default=VAL1];
   required ExampleEnum exampleenum_1 = 54;
   repeated ExampleEnum exampleenum_2 = 55;
 
-  optional string string_0 = 56;
+  optional string string_0 = 56 [default="a_default"];
   required string string_1 = 57;
   repeated string string_2 = 58;
 
@@ -93,7 +93,7 @@ message Hello {
   required SubMessage submessage_1 = 60;
   repeated SubMessage submessage_2 = 61;
 
-  optional bytes bytes_0 = 62;
+  optional bytes bytes_0 = 62 [default="211"];
   required bytes bytes_1 = 63;
   repeated bytes bytes_2 = 64;
 }

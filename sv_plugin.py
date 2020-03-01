@@ -288,6 +288,18 @@ class SVFieldDescriptorProto():
     @property
     def sv_number(self):
         return f"{self.name}__field_number"
+
+    @property
+    def sv_default(self):
+        if not self.default_value:
+            return ""
+        if self.type == self.TYPE_STRING:
+            return f" = \"{self.default_value}\""
+        if self.type == self.TYPE_BYTES:
+            bs = [f"8'h{ord(char):02x}" for char in self.default_value]
+            return f' = \'{{{", ".join(bs)}}}'
+        else:
+            return f" = {self.default_value}"
     
 def generate_code(request, response):
     pkgs = {}
@@ -317,7 +329,7 @@ def generate_code(request, response):
                 sv_fields = [SVFieldDescriptorProto(f, package, imports) for f in item.field]
 
                 for f in sv_fields:
-                    pkg.append(f"    {f.sv_rand}{f.sv_type} {f.name}{f.sv_queue};")
+                    pkg.append(f"    {f.sv_rand}{f.sv_type} {f.name}{f.sv_queue}{f.sv_default};")
                 pkg.append("")
 
                 for f in sv_fields:
