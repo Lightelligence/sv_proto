@@ -295,7 +295,7 @@ def generate_code(request, response):
             imports = set()
             if isinstance(item, DescriptorProto):
                 #lines.append(str(dir(FieldDescriptorProto)))
-                pkg.append(f"  class {item.name} #(type BASE_CLASS=uvm_object) extends BASE_CLASS;")
+                pkg.append(f"  class {item.name} extends uvm_object;")
                 pkg.append("")
                 
                 sv_fields = [SVFieldDescriptorProto(f, package, imports) for f in item.field]
