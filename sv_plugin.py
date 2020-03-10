@@ -133,6 +133,26 @@ PB_TYPE_NUMBER_REPEATED_TO_UVM_FIELD_MACRO = {
     FieldDescriptorProto.TYPE_UINT64  : 'uvm_field_queue_int',
 }
 
+UVM_AVAILABLE_AA_MACROS = [
+    "uvm_field_aa_int_string",
+    "uvm_field_aa_string_string",
+    "uvm_field_aa_object_string",
+    "uvm_field_aa_int_int",
+    "uvm_field_aa_int_int",
+    "uvm_field_aa_int_int_unsigned",
+    "uvm_field_aa_int_integer",
+    "uvm_field_aa_int_integer_unsigned",
+    "uvm_field_aa_int_byte",
+    "uvm_field_aa_int_byte_unsigned",
+    "uvm_field_aa_int_shortint",
+    "uvm_field_aa_int_shortint_unsigned",
+    "uvm_field_aa_int_longint",
+    "uvm_field_aa_int_longint_unsigned",
+    "uvm_field_aa_int_key",
+    "uvm_field_aa_string_int",
+    "uvm_field_aa_object_int",
+]
+
 # See if type should be randomized
 PB_TYPE_NUMBER_TO_RAND = {
     FieldDescriptorProto.TYPE_BOOL     : 'rand ',
@@ -175,6 +195,9 @@ class GeneratedPackage():
 
     def append(self, line):
         self._lines.append(line)
+        
+    def extend(self, lines):
+        self._lines.extend(lines)
 
     def finish(self):
         if self._package_name:
@@ -219,10 +242,15 @@ def get_ref_type(package, imports, type_name):
 
 class SVFieldDescriptorProto():
     """Helper functions on FieldDescriptorProto specific to this generator."""
-    def __init__(self, f, package, imports):
+    def __init__(self, f, package, imports, maps):
         self.f = f
         self.package = package
         self.imports = imports
+        self.maps = maps
+        try:
+            self.sv_map = self.maps[self.type_name.rsplit(".")[-1]]
+        except KeyError:
+            self.sv_map = False
 
     def __getattr__(self, attribute):
         try:
@@ -266,6 +294,8 @@ class SVFieldDescriptorProto():
 
     @property
     def sv_field_macro(self):
+        if self.sv_map:
+            return self.sv_map.sv_field_macro
         if self.label == self.LABEL_REPEATED:
             macro_type = PB_TYPE_NUMBER_REPEATED_TO_UVM_FIELD_MACRO[self.type]
         else:
@@ -282,12 +312,25 @@ class SVFieldDescriptorProto():
             return f"{self.name}, UVM_ALL_ON"
 
     @property
+    def sv_var_declaration(self):
+        if self.sv_map:
+            return f"    {self.sv_rand}{self.sv_map.sv_value.sv_type} {self.name}[{self.sv_map.sv_key.sv_type}];"
+        else:
+            return f"    {self.sv_rand}{self.sv_type} {self.name}{self.sv_queue}{self.sv_default};"
+
+    @property
     def sv_wire_type(self):
         return f"{PB_TYPE_NUMBER_TO_WIRE_TYPE[self.type]}"
     
-    @property
-    def sv_number(self):
-        return f"{self.name}__field_number"
+    def sv_number(self, prefix=""):
+        return f"{prefix}{self.name}__field_number"
+
+    def sv_number_declaration_lines(self, prefix=""):
+        lines = []
+        lines.append(f"    local const {PB_PKG}::field_number_t {prefix}{self.sv_number()} = {self.number};")
+        if self.sv_map:
+            lines.extend(self.sv_map.sv_number_declaration_lines(prefix=f"{self.name}_"))
+        return lines
 
     @property
     def sv_default(self):
@@ -300,6 +343,205 @@ class SVFieldDescriptorProto():
             return f' = \'{{{", ".join(bs)}}}'
         else:
             return f" = {self.default_value}"
+
+    def sv_deserialize(self, indent, result_var="", field_number_prefix=""):
+        lines = []
+        lines.append(f"////////////////////////////////")
+        lines.append(f"// {self.name}")
+        lines.append(f"{self.sv_number(prefix=field_number_prefix)}: begin")
+
+        if self.sv_map:
+            lines.extend(self.sv_map.sv_deserialize(indent=2, varname=self.name, field_number_prefix=f"{self.name}_"))
+        else:
+            if result_var == "":
+                result_var = self.name
+            if self.sv_queue:
+                result_var = f"tmp_{self.name}"
+                lines.append(f"  {self.sv_type} {result_var};")
+            if self.type == self.TYPE_MESSAGE:
+                lines.append(f"  assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
+                lines.append(f"  {result_var} = {self.sv_type}::type_id::create();")
+                lines.append(f"  {result_var}._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + delimited_length));")
+                if self.sv_queue:
+                    lines.append(f"  this.{self.name}.push_back({result_var});")
+            elif self.type in [self.TYPE_STRING, self.TYPE_BYTES]:
+                lines.append(f"  assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
+                lines.append(f"  assert (!{PB_PKG}::{self.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));")
+                if self.sv_queue:
+                    lines.append(f"  this.{self.name}.push_back({result_var});")
+            else:
+                lines.append(f"  assert ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) || (wire_type == {PB_PKG}::{self.sv_wire_type}));")
+                lines.append(f"  do begin")
+                if self.type == self.TYPE_ENUM:
+                    lines.append(f"    {PB_PKG}::varint_t tmp_varint;")
+                    result_var_enum = result_var
+                    result_var = "tmp_varint"
+                lines.append(f"    assert (!{PB_PKG}::{self.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
+                if self.type == self.TYPE_ENUM:
+                    result_var = result_var_enum
+                    lines.append(f"  {result_var} = {self.sv_type}'(tmp_varint);")
+                if self.sv_queue:
+                    lines.append(f"    this.{self.name}.push_back({result_var});")
+                lines.append(f"  end while ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));")
+            if self.label == self.LABEL_REQUIRED:
+                if self.type != FieldDescriptorProto.TYPE_MESSAGE:
+                    lines.append(f"  this.{self.name}__is_initialized = 1;")
+
+        lines.append(f"end")
+        return [" "*indent + line for line in lines]
+
+    def sv_serialize_lines(self, indent, stream="_stream", result_var="", field_number_prefix=""):
+        lines = []
+        # FIXME add assertions that required fields are initialized
+        if self.sv_map:
+            lines.extend(self.sv_map.sv_serialize_lines(indent=0, varname=self.name, field_number_prefix=f"{self.name}_"))
+        elif self.type == self.TYPE_MESSAGE:
+            if self.sv_queue:
+                lines.append(f"foreach (this.{self.name}[ii]) begin")
+                lines.append(f"  {self.sv_type} tmp = this.{self.name}[ii];")
+                result_var = "tmp"
+            else:
+                lines.append(f"begin")
+                # FIXME skip if optional
+                if not result_var:
+                    lines.append(f"  {self.sv_type} tmp = this.{self.name};")
+                    result_var = "tmp"
+            lines.append(f"  {PB_PKG}::enc_bytestream_t sub_stream;")
+            lines.append(f"  {result_var}._serialize(._stream(sub_stream));")
+            lines.append(f"  {PB_PKG}::encode_delimited(._field_number(this.{self.sv_number(field_number_prefix)}),")
+            lines.append(f"                           ._delimited_stream(sub_stream),")
+            lines.append(f"                           ._stream({stream}));")
+            lines.append(f"end")
+        elif self.type in [self.TYPE_STRING, self.TYPE_BYTES]:
+            if self.sv_queue:
+                lines.append(f"foreach (this.{self.name}[ii]) begin")
+                lines.append(f"  {self.sv_type} tmp = this.{self.name}[ii];")
+                result_var = "tmp"
+            else:
+                lines.append(f"begin")
+                # FIXME skip if optional
+                if not result_var:
+                    lines.append(f"  {self.sv_type} tmp = this.{self.name};")
+                    result_var = "tmp"
+            lines.append(f"  {PB_PKG}::encode_message_key(._field_number(this.{self.sv_number(field_number_prefix)}),")
+            lines.append(f"                             ._wire_type({PB_PKG}::WIRE_TYPE_DELIMITED),")
+            lines.append(f"                             ._stream({stream}));")
+            lines.append(f"  {PB_PKG}::{self.sv_encode_func}(._value({result_var}),")
+            lines.append(f"                             ._stream({stream}));")
+            lines.append(f"end")
+        else:
+            if self.options.packed: # Packed implies repeated
+                lines.append(f"if (this.{self.name}.size()) begin")
+                lines.append(f"  {PB_PKG}::enc_bytestream_t sub_stream;")
+                lines.append(f"  foreach (this.{self.name}[ii]) begin")
+                lines.append(f"    {PB_PKG}::{self.sv_encode_func}(._value(this.{self.name}[ii]), ._stream(sub_stream));")
+                lines.append(f"  end")
+                lines.append(f"  {PB_PKG}::encode_delimited(._field_number(this.{self.sv_number(field_number_prefix)}),")
+                lines.append(f"                           ._delimited_stream(sub_stream),")
+                lines.append(f"                           ._stream({stream}));")
+                lines.append(f"end")
+            else:
+                if self.sv_queue:
+                    lines.append(f"foreach (this.{self.name}[ii]) begin")
+                    lines.append(f"  {self.sv_type} tmp = this.{self.name}[ii];")
+                    result_var = "tmp"
+                else:
+                    lines.append(f"begin")
+                    # FIXME skip if optional
+                    if not result_var:
+                        lines.append(f"  {self.sv_type} tmp = this.{self.name};")
+                        result_var = "tmp"
+                lines.append(f"  {PB_PKG}::encode_message_key(._field_number(this.{self.sv_number(field_number_prefix)}),")
+                lines.append(f"                             ._wire_type({PB_PKG}::{self.sv_wire_type}),")
+                lines.append(f"                             ._stream({stream}));")
+                lines.append(f"  {PB_PKG}::{self.sv_encode_func}(._value({result_var}), ._stream({stream}));")
+                lines.append("end")
+        return [' '*indent + line for line in lines]
+
+
+class SVDescriptorProto():
+
+    def __init__(self, item, package, imports):
+        self.item = item
+        self.package = package
+        self.imports = imports
+
+        # Need to expand maps
+        maps = {}
+        for nt in self.nested_type:
+            if nt.options.map_entry:
+                maps[nt.name] = SVMapDescriptorProto(nt, package, imports)
+
+        self.sv_fields = [SVFieldDescriptorProto(f, package, imports, maps) for f in self.field]
+
+    def __getattr__(self, attribute):
+        try:
+            return super(SVDescriptorProto, self).__getattr__(attribute)
+        except AttributeError:
+            return getattr(self.item, attribute)
+
+class SVMapDescriptorProto(SVDescriptorProto):
+    def __init__(self, *args, **kwargs):
+        super(SVMapDescriptorProto, self).__init__(*args, **kwargs)
+        for f in self.sv_fields:
+            if f.name == "key":
+                self.sv_key = f
+            if f.name == "value":
+                self.sv_value = f
+
+    def sv_number_declaration_lines(self, prefix=""):
+        lines = []
+        for f in self.sv_fields:
+            lines.append(f"    local const {PB_PKG}::field_number_t {prefix}{f.sv_number()} = {f.number};")
+        return lines
+
+    @property
+    def sv_field_macro(self):
+        # TODO maybe make this more permissive (e.g. allow string->int on integer types)
+        macro = f"`uvm_field_aa_{self.sv_key.sv_type}_{self.sv_value.sv_type.replace(' ', '_')}"
+        if macro in UVM_AVAILABLE_AA_MACROS:
+            return macro
+        return ""
+
+    def sv_deserialize(self, indent, varname, field_number_prefix):
+        lines = []
+        lines.append(f"  assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
+        lines.append(f"  while ((_cursor < stream_size) && (_cursor < delimited_stop)) begin")
+        lines.append(f"    {self.sv_key.sv_type} found_key;")
+        lines.append(f"    {self.sv_value.sv_type} found_value;")
+        lines.append(f"    assert (!pb_pkg::decode_message_key(._field_number(field_number),")
+        lines.append(f"                                        ._wire_type(wire_type),")
+        lines.append(f"                                        ._stream(_stream),")
+        lines.append(f"                                        ._cursor(_cursor)));")
+        lines.append(f"    case (field_number)")
+        lines.extend(self.sv_key.sv_deserialize(indent=6, result_var='found_key', field_number_prefix=field_number_prefix))
+        lines.extend(self.sv_value.sv_deserialize(indent=6, result_var='found_value', field_number_prefix=field_number_prefix))
+        lines.append(f"      default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));")
+        lines.append(f"    endcase")
+        lines.append(f"    {varname}[found_key] = found_value;")
+        lines.append(f"  ")
+        lines.append(f"  end")
+        return [" "*indent + line for line in lines]
+
+    def sv_serialize_lines(self, indent, varname, field_number_prefix=""):
+        lines = []
+        substream = f"{varname}_sub_stream"
+        lines.append("begin")
+        lines.append(f"  {PB_PKG}::enc_bytestream_t {substream};")
+        lines.append(f"  foreach (this.{varname}[xx]) begin")
+        lines.append(f"    {self.sv_key.sv_type} found_key = xx;")
+        lines.append(f"    {self.sv_value.sv_type} found_value = this.{varname}[xx];")
+        lines.extend(self.sv_key.sv_serialize_lines(indent=4, result_var='found_key', field_number_prefix=field_number_prefix, stream=substream))
+        lines.extend(self.sv_value.sv_serialize_lines(indent=4, result_var='found_value', field_number_prefix=field_number_prefix, stream=substream))
+        lines.append(f"  end")
+        lines.append(f"  if (this.{varname}.size()) begin")
+        lines.append(f"    {PB_PKG}::encode_delimited(._field_number({varname}__field_number),")
+        lines.append(f"                             ._delimited_stream({substream}),")
+        lines.append(f"                             ._stream(_stream));")
+        lines.append(f"  end")
+        lines.append("end")
+        return [" "*indent + line for line in lines]
+
     
 def generate_code(request, response):
     pkgs = {}
@@ -321,22 +563,24 @@ def generate_code(request, response):
             # }
 
             imports = set()
+
             if isinstance(item, DescriptorProto):
+
+                item = SVDescriptorProto(item, package, imports)
+
                 #lines.append(str(dir(FieldDescriptorProto)))
                 pkg.append(f"  class {item.name} extends uvm_object;")
                 pkg.append("")
                 
-                sv_fields = [SVFieldDescriptorProto(f, package, imports) for f in item.field]
-
-                for f in sv_fields:
-                    pkg.append(f"    {f.sv_rand}{f.sv_type} {f.name}{f.sv_queue}{f.sv_default};")
+                for f in item.sv_fields:
+                    pkg.append(f"    {f.sv_var_declaration}")
                 pkg.append("")
 
-                for f in sv_fields:
-                    pkg.append(f"    local const {PB_PKG}::field_number_t {f.sv_number} = {f.number};")
+                for f in item.sv_fields:
+                    pkg.extend(f.sv_number_declaration_lines())
                 pkg.append("")
 
-                for f in sv_fields:
+                for f in item.sv_fields:
                     pkg.append(f"    local const {PB_PKG}::label_e {f.name}__label = {PB_PKG}::{f.sv_label};")
                 pkg.append("")
 
@@ -344,14 +588,14 @@ def generate_code(request, response):
                 # Not sure how to set these if not randomizing the object
                 # Using getters/setters isn't worthwhile if the member is local
                 # Making the member local makes it more difficult to randomize
-                for f in sv_fields:
+                for f in item.sv_fields:
                     # Message fields should be calculated recursively
                     if f.type != FieldDescriptorProto.TYPE_MESSAGE:
                         pkg.append(f"    bit {f.name}__is_initialized = 0;")
                 pkg.append("")
 
                 pkg.append(f"    `uvm_object_utils_begin({item.name})")
-                for f in sv_fields:
+                for f in item.sv_fields:
                         pkg.append(f"      {f.sv_field_macro}")
                 pkg.append("    `uvm_object_utils_end")
                 pkg.append("")
@@ -366,61 +610,9 @@ def generate_code(request, response):
                 pkg.append("    endfunction : serialize")
                 pkg.append("")
                 pkg.append(f"    function void _serialize(ref {PB_PKG}::enc_bytestream_t _stream);")
-                pkg.append("       assert (this.is_initialized());")
-                for f in sv_fields:
-                    # FIXME add assertions that required fields are initialized
-                    if f.type == FieldDescriptorProto.TYPE_MESSAGE:
-                        if f.sv_queue:
-                            pkg.append(f"      foreach (this.{f.name}[ii]) begin")
-                            pkg.append(f"        {f.sv_type} tmp = this.{f.name}[ii];")
-                        else:
-                            pkg.append(f"      begin")
-                            # FIXME skip if optional
-                            pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
-                        pkg.append(f"        {PB_PKG}::enc_bytestream_t sub_stream;")
-                        pkg.append(f"        tmp._serialize(._stream(sub_stream));")
-                        pkg.append(f"        {PB_PKG}::encode_delimited(._field_number(this.{f.sv_number}),")
-                        pkg.append(f"                                 ._delimited_stream(sub_stream),")
-                        pkg.append(f"                                 ._stream(_stream));")
-                        pkg.append(f"      end")
-                    elif f.type in [f.TYPE_STRING, f.TYPE_BYTES]:
-                        if f.sv_queue:
-                            pkg.append(f"      foreach (this.{f.name}[ii]) begin")
-                            pkg.append(f"        {f.sv_type} tmp = this.{f.name}[ii];")
-                        else:
-                            pkg.append(f"      begin")
-                            # FIXME skip if optional
-                            pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
-                        pkg.append(f"        {PB_PKG}::encode_message_key(._field_number(this.{f.sv_number}),")
-                        pkg.append(f"                                   ._wire_type({PB_PKG}::WIRE_TYPE_DELIMITED),")
-                        pkg.append(f"                                   ._stream(_stream));")
-                        pkg.append(f"        {PB_PKG}::{f.sv_encode_func}(._value(tmp),")
-                        pkg.append(f"                                   ._stream(_stream));")
-                        pkg.append(f"      end")
-                    else:
-                        if f.options.packed: # Packed implies repeated
-                            pkg.append(f"      if (this.{f.name}.size()) begin")
-                            pkg.append(f"        {PB_PKG}::enc_bytestream_t sub_stream;")
-                            pkg.append(f"        foreach (this.{f.name}[ii]) begin")
-                            pkg.append(f"          {PB_PKG}::{f.sv_encode_func}(._value(this.{f.name}[ii]), ._stream(sub_stream));")
-                            pkg.append(f"        end")
-                            pkg.append(f"        {PB_PKG}::encode_delimited(._field_number(this.{f.sv_number}),")
-                            pkg.append(f"                                 ._delimited_stream(sub_stream),")
-                            pkg.append(f"                                 ._stream(_stream));")
-                            pkg.append(f"      end")
-                        else:
-                            if f.sv_queue:
-                                pkg.append(f"      foreach (this.{f.name}[ii]) begin")
-                                pkg.append(f"        {f.sv_type} tmp = this.{f.name}[ii];")
-                            else:
-                                pkg.append(f"      begin")
-                                # FIXME skip if optional
-                                pkg.append(f"        {f.sv_type} tmp = this.{f.name};")
-                            pkg.append(f"        {PB_PKG}::encode_message_key(._field_number(this.{f.sv_number}),")
-                            pkg.append(f"                                   ._wire_type({PB_PKG}::{f.sv_wire_type}),")
-                            pkg.append(f"                                   ._stream(_stream));")
-                            pkg.append(f"        {PB_PKG}::{f.sv_encode_func}(._value(tmp), ._stream(_stream));")
-                            pkg.append("      end")
+                pkg.append(f"      assert (this.is_initialized());")
+                for f in item.sv_fields:
+                    pkg.extend(f.sv_serialize_lines(indent=6))
                 pkg.append("")
                 pkg.append("    endfunction : _serialize")
                 pkg.append("")
@@ -448,42 +640,8 @@ def generate_code(request, response):
                 pkg.append("            delimited_stop = _cursor + delimited_length;")
                 pkg.append("        end")
                 pkg.append("        case (field_number)")
-                for f in sv_fields:
-                    pkg.append(f"          {f.name}__field_number: begin")
-                    result_var = f.name
-                    if f.sv_queue:
-                        result_var = f"tmp_{f.name}"
-                        pkg.append(f"            {f.sv_type} {result_var};")
-                    if f.type == FieldDescriptorProto.TYPE_MESSAGE:
-                        pkg.append(f"            assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
-                        pkg.append(f"            {result_var} = {f.sv_type}::type_id::create();")
-                        pkg.append(f"            {result_var}._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + delimited_length));")
-                        if f.sv_queue:
-                            pkg.append(f"            this.{f.name}.push_back({result_var});")
-                    elif f.type in [f.TYPE_STRING, f.TYPE_BYTES]:
-                        pkg.append(f"            assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
-                        pkg.append(f"            assert (!{PB_PKG}::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));")
-                        if f.sv_queue:
-                            pkg.append(f"            this.{f.name}.push_back({result_var});")
-                    else:
-                        pkg.append(f"            assert ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) || (wire_type == {PB_PKG}::{f.sv_wire_type}));")
-                        pkg.append(f"            do begin")
-                        if f.type == FieldDescriptorProto.TYPE_ENUM:
-                            pkg.append(f"              {PB_PKG}::varint_t tmp_varint;")
-                            result_var_enum = result_var
-                            result_var = "tmp_varint"
-                        pkg.append(f"              assert (!{PB_PKG}::{f.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
-                        if f.type == FieldDescriptorProto.TYPE_ENUM:
-                            result_var = result_var_enum
-                            pkg.append(f"            {result_var} = {f.sv_type}'(tmp_varint);")
-                        if f.sv_queue:
-                            pkg.append(f"              this.{f.name}.push_back({result_var});")
-                        pkg.append(f"            end while ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));")
-                    if f.label == f.LABEL_REQUIRED:
-                        if f.type != FieldDescriptorProto.TYPE_MESSAGE:
-                            pkg.append(f"            this.{f.name}__is_initialized = 1;")
-                    pkg.append(f"          end")
-
+                for f in item.sv_fields:
+                    pkg.extend(f.sv_deserialize(indent=10))
                 pkg.append(f"          default : assert (!{PB_PKG}::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));")
                 pkg.append("        endcase")
                 pkg.append(f"        if (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) begin")
@@ -495,7 +653,7 @@ def generate_code(request, response):
                 pkg.append("")
                 pkg.append("    function bit is_initialized();")
                 pkg.append("      is_initialized = 1;")
-                for f in sv_fields:
+                for f in item.sv_fields:
                     if f.label == f.LABEL_REQUIRED:
                         if f.type == FieldDescriptorProto.TYPE_MESSAGE:
                             pkg.append(f"      if (this.{f.name} == null) begin")
@@ -507,9 +665,9 @@ def generate_code(request, response):
                         else:
                             pkg.append(f"      is_initialized &= this.{f.name}__is_initialized;")
                 pkg.append("    endfunction : is_initialized")
-
+                pkg.append("")
                 pkg.append("    function void post_randomize();")
-                for f in sv_fields:
+                for f in item.sv_fields:
                     if f.label == f.LABEL_REQUIRED:
                         # TODO
                         # What about strings and floats?
@@ -545,6 +703,7 @@ def traverse(proto_file):
 
     def _traverse(package, items):
         for item in items:
+
             yield item, package
 
             if isinstance(item, DescriptorProto):
@@ -557,6 +716,7 @@ def traverse(proto_file):
                     for nested_item in _traverse(nested, nested_package):
                         yield nested_item, nested_package
 
+
     return itertools.chain(
         _traverse(proto_file.package, proto_file.enum_type),
         _traverse(proto_file.package, proto_file.message_type),
@@ -566,6 +726,8 @@ def traverse(proto_file):
 if __name__ == '__main__':
     # Read request message from stdin
     data = sys.stdin.buffer.read()
+    # with open("stdin.txt", 'rb') as f:
+    #     data = f.read()
 
     # Parse request
     request = plugin.CodeGeneratorRequest()
