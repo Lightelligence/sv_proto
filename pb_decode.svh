@@ -191,7 +191,7 @@ function automatic bit decode_type_sint32(output int _result,
                                           ref cursor_t _cursor);
    bit        retval;
    bit [31:0] zigzag;
-   retval |= _extract_32_bits(._result(zigzag), ._stream(_stream), ._cursor(_cursor));
+   retval |= decode_varint(._value(zigzag), ._stream(_stream), ._cursor(_cursor));
    _result = _zigzag32_to_int(zigzag);
    return retval;
 endfunction : decode_type_sint32
@@ -201,7 +201,7 @@ function automatic bit decode_type_sint64(output longint _result,
                                           ref cursor_t _cursor);
    bit        retval;
    bit [63:0] zigzag;
-   retval |= _extract_64_bits(._result(zigzag), ._stream(_stream), ._cursor(_cursor));
+   retval |= decode_varint(._value(zigzag), ._stream(_stream), ._cursor(_cursor));
    _result = _zigzag64_to_longint(zigzag);
    return retval;
 endfunction : decode_type_sint64

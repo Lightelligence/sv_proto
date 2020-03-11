@@ -151,13 +151,13 @@ endfunction : encode_type_sfixed64
 function automatic void encode_type_sint32(input int _value,
                                           ref enc_bytestream_t _stream);
    bit [31:0] zigzag = _int_to_zigzag32(_value);
-   _insert_32_bits(._value(zigzag), ._stream(_stream));
+   encode_varint(._value(zigzag), ._stream(_stream));
 endfunction : encode_type_sint32
 
 function automatic void encode_type_sint64(input longint _value,
                                           ref enc_bytestream_t _stream);
    bit [63:0] zigzag = _longint_to_zigzag64(_value);
-   _insert_64_bits(._value(zigzag), ._stream(_stream));
+   encode_varint(._value(zigzag), ._stream(_stream));
 endfunction : encode_type_sint64
 
 `endif // guard
