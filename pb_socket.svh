@@ -8,14 +8,15 @@
 `ifndef __PB_SOCKET_SVH__
  `define __PB_SOCKET_SVH__
 
-import "DPI" socket_initialize  = function void _socket_initialize (string socket_name);
-import "DPI" socket_write_bytes = function void _socket_write_bytes(input  byte _stream[]);
-import "DPI" socket_read_bytes  = task _socket_read_bytes (output byte _stream[]);
+import "DPI" socket_initialize  = function int _socket_initialize (string socket_name);
+import "DPI" socket_write_bytes = function void _socket_write_bytes(input int _socket_id, input  byte _stream[]);
+import "DPI" socket_read_bytes  = task _socket_read_bytes (input int _socket_id, output byte _stream[]);
 
 class socket_c extends uvm_object;
 
    local bit is_initialized = 0;
    string name;
+   local int socket_id;
 
    `uvm_object_utils_begin(socket_c)
       `uvm_field_string(name, UVM_ALL_ON)
@@ -31,23 +32,23 @@ class socket_c extends uvm_object;
          return;
       end
       this.name = _name;
-      _socket_initialize(name);
+      this.socket_id = _socket_initialize(name);
    endfunction : initialize
 
    virtual function void tx_serialized_message(ref bytestream_t _stream);
       bytestream_t stream_size = '{0, 0, 0, 0};
       stream_size = {<<8{_stream.size()}};
-      _socket_write_bytes(stream_size);
-      _socket_write_bytes(_stream);
+      _socket_write_bytes(this.socket_id, stream_size);
+      _socket_write_bytes(this.socket_id, _stream);
    endfunction : tx_serialized_message
 
    virtual task rx_serialized_message(ref bytestream_t _stream);
       bytestream_t payload_size_buf = new[4];
       int unsigned payload_size;
-      _socket_read_bytes(payload_size_buf);
+      _socket_read_bytes(this.socket_id, payload_size_buf);
       payload_size = {<<8{payload_size_buf}};
       _stream = new[payload_size];
-      _socket_read_bytes(_stream);
+      _socket_read_bytes(this.socket_id, _stream);
    endtask : rx_serialized_message
 
 endclass : socket_c      

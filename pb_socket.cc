@@ -10,29 +10,27 @@
 
 using namespace std;
 
-// global socket file descriptor
-int pbps_sock;
-
 extern "C" int socket_initialize(const char *socket_name) {
+  int socket_id;
   struct sockaddr_un saddr;
   saddr.sun_family = AF_UNIX;
   strncpy (saddr.sun_path, socket_name, sizeof(saddr.sun_path));
   saddr.sun_path[sizeof (saddr.sun_path) - 1] = '\0';
 
-  if ((pbps_sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) { 
+  if ((socket_id = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) { 
     printf("Failed to create socket handle\n"); 
     return -1; 
   }
 
-  if (connect(pbps_sock, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) { 
+  if (connect(socket_id, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) { 
     printf("\nConnection to socket %s Failed \n", socket_name);
     return -1; 
   } 
   printf("Socket %s connected successfully\n", socket_name);
-  return 0;
+  return socket_id;
 }
 
-extern "C" int socket_write_bytes(const svOpenArrayHandle h) {
+extern "C" int socket_write_bytes(int socket_id, const svOpenArrayHandle h) {
   cout << "FIXME remove. In socket_write_bytes" << endl;
   if (svDimensions(h) != 1) {
     cout << "FIXME assertion. multidimensional data sent to socket_write_bytes" << endl;
@@ -44,11 +42,11 @@ extern "C" int socket_write_bytes(const svOpenArrayHandle h) {
   // cout << "Data size: " << data_size << endl;
 
   unsigned char* raw_array = (unsigned char*)svGetArrayPtr(h);
-  write(pbps_sock, raw_array, data_size);
+  write(socket_id, raw_array, data_size);
   return 0;
 }
 
-extern "C" int socket_read_bytes(svOpenArrayHandle h) {
+extern "C" int socket_read_bytes(int socket_id, svOpenArrayHandle h) {
   if (svDimensions(h) != 1) {
     cout << "FIXME assertion. multidimensional data sent to socket_write_bytes" << endl;
   }
@@ -61,7 +59,7 @@ extern "C" int socket_read_bytes(svOpenArrayHandle h) {
 
   unsigned char* raw_array = (unsigned char*)svGetArrayPtr(h);
 
-  read(pbps_sock, raw_array, data_size);
+  read(socket_id, raw_array, data_size);
 
   return 0;
 }
