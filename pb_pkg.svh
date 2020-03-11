@@ -17,6 +17,8 @@ Encoding documentation:
 
 package pb_pkg;
 
+   import uvm_pkg::*;
+
    typedef byte             bytestream_t[];
    // Using a queue to build up the bytestream for encoding,
    // otherwise it would be necessary to check and frequently resize the array.
@@ -49,6 +51,7 @@ package pb_pkg;
 
 `include "pb_decode.svh"
 `include "pb_encode.svh"
+`include "pb_socket.svh"   
 
 endpackage : pb_pkg
 

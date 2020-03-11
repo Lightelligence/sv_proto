@@ -10,3 +10,16 @@ git_repository(
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
+
+
+new_local_repository(
+    name = "xcelium",
+    path = "/tools/cadence/XCELIUM1909/tools.lnx86/include/",
+    build_file_content = """
+filegroup(
+    name = "dpi_headers",
+    srcs = ["svdpi.h", "svdpi_compatibility.h"],
+    visibility = ["//visibility:public"],
+)
+""",
+)
