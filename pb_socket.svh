@@ -8,7 +8,7 @@
 `ifndef __PB_SOCKET_SVH__
  `define __PB_SOCKET_SVH__
 
-import "DPI" socket_initialize  = function int _socket_initialize (string socket_name);
+import "DPI" socket_initialize  = function int _socket_initialize (input string socket_name, output int _socket_id);
 import "DPI" socket_write_bytes = function void _socket_write_bytes(input int _socket_id, input  byte _stream[]);
 import "DPI" socket_read_bytes  = task _socket_read_bytes (input int _socket_id, output byte _stream[]);
 
@@ -32,11 +32,17 @@ class socket_c extends uvm_object;
          return;
       end
       this.name = _name;
-      this.socket_id = _socket_initialize(name);
+      if (_socket_initialize(name, this.socket_id)) begin
+         `uvm_fatal("socket", $sformatf("Failed to connect to socket %s", this.name))
+      end
+      this.is_initialized = 1;
    endfunction : initialize
 
    virtual function void tx_serialized_message(ref bytestream_t _stream);
       bytestream_t stream_size = '{0, 0, 0, 0};
+      if (!this.is_initialized) begin
+         `uvm_fatal("socket", "Attempting to tx_serialized_message before initialization")
+      end
       stream_size = {<<8{_stream.size()}};
       _socket_write_bytes(this.socket_id, stream_size);
       _socket_write_bytes(this.socket_id, _stream);
@@ -45,6 +51,9 @@ class socket_c extends uvm_object;
    virtual task rx_serialized_message(ref bytestream_t _stream);
       bytestream_t payload_size_buf = new[4];
       int unsigned payload_size;
+      if (!this.is_initialized) begin
+         `uvm_fatal("socket", "Attempting to rx_serialized_message before initialization")
+      end
       _socket_read_bytes(this.socket_id, payload_size_buf);
       payload_size = {<<8{payload_size_buf}};
       _stream = new[payload_size];
