@@ -47,13 +47,14 @@ py_binary(
 sh_test(
     name = "native_cross_language_test",
     size = "small",
-    srcs = ["passthrough.sh"],
+    srcs = ["native_cross_language_test.sh"],
     data = [
         "//:pb_pkg.svh",
         "//:pb",
         "//:pb_socket.so",
         ":native",
         "native_cross_language_test.sv",
+        ":cross_language",
     ],
     args = ["xrun -64 -licqueue -access rwc -linedebug -createdebugdb -uvm -sv_lib $(location //:pb_socket.so) $(locations //:pb_pkg.svh) $(location :native) $(location native_cross_language_test.sv)"],
     tags = ["xrun"],

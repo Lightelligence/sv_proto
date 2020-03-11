@@ -11,7 +11,7 @@ task automatic test();
       src.f60 = SubMessage::type_id::create("foob");
       src.f63 = '{8'h30, 8'h51};
 
-      socket.initialize("/u/wstucker/w/mosaic/sv_proto/foo");
+      socket.initialize("cross_language_socket");
       src.serialize(stream0);
       socket.tx_serialized_message(stream0);
       socket.rx_serialized_message(stream1);
