@@ -399,14 +399,12 @@ class SVFieldDescriptorProto():
         elif self.type == self.TYPE_MESSAGE:
             if self.sv_queue:
                 lines.append(f"foreach (this.{self.name}[ii]) begin")
-                lines.append(f"  {self.sv_type} tmp = this.{self.name}[ii];")
-                result_var = "tmp"
+                result_var = f"this.{self.name}[ii]"
             else:
-                lines.append(f"begin")
-                # FIXME skip if optional
                 if not result_var:
-                    lines.append(f"  {self.sv_type} tmp = this.{self.name};")
-                    result_var = "tmp"
+                    result_var = f"this.{self.name}"
+                lines.append(f"if ({result_var}) begin")
+                # FIXME error if required
             lines.append(f"  {PB_PKG}::enc_bytestream_t sub_stream;")
             lines.append(f"  {result_var}._serialize(._stream(sub_stream));")
             lines.append(f"  {PB_PKG}::encode_delimited(._field_number(this.{self.sv_number(field_number_prefix)}),")
@@ -416,14 +414,13 @@ class SVFieldDescriptorProto():
         elif self.type in [self.TYPE_STRING, self.TYPE_BYTES]:
             if self.sv_queue:
                 lines.append(f"foreach (this.{self.name}[ii]) begin")
-                lines.append(f"  {self.sv_type} tmp = this.{self.name}[ii];")
-                result_var = "tmp"
+                result_var = f"this.{self.name}[ii]"
             else:
-                lines.append(f"begin")
-                # FIXME skip if optional
                 if not result_var:
-                    lines.append(f"  {self.sv_type} tmp = this.{self.name};")
-                    result_var = "tmp"
+                    result_var = f"this.{self.name}"
+                size_func = "len" if self.type == self.TYPE_STRING else "size"
+                lines.append(f"if ({result_var}.{size_func}()) begin")
+                # FIXME error if required
             lines.append(f"  {PB_PKG}::encode_message_key(._field_number(this.{self.sv_number(field_number_prefix)}),")
             lines.append(f"                             ._wire_type({PB_PKG}::WIRE_TYPE_DELIMITED),")
             lines.append(f"                             ._stream({stream}));")
