@@ -314,7 +314,8 @@ class SVFieldDescriptorProto():
     @property
     def sv_var_declaration(self):
         if self.sv_map:
-            return f"    {self.sv_rand}{self.sv_map.sv_value.sv_type} {self.name}[{self.sv_map.sv_key.sv_type}];"
+            rand = PB_TYPE_NUMBER_TO_RAND[self.sv_map.sv_value.type]
+            return f"    {rand}{self.sv_map.sv_value.sv_type} {self.name}[{self.sv_map.sv_key.sv_type}];"
         else:
             return f"    {self.sv_rand}{self.sv_type} {self.name}{self.sv_queue}{self.sv_default};"
 
@@ -505,36 +506,42 @@ class SVMapDescriptorProto(SVDescriptorProto):
 
     def sv_deserialize(self, indent, varname, field_number_prefix):
         lines = []
+        lines.append(f"  {self.sv_key.sv_type} found_key;")
+        lines.append(f"  {self.sv_value.sv_type} found_value;")
         lines.append(f"  assert (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED);")
         lines.append(f"  while ((_cursor < stream_size) && (_cursor < delimited_stop)) begin")
-        lines.append(f"    {self.sv_key.sv_type} found_key;")
-        lines.append(f"    {self.sv_value.sv_type} found_value;")
         lines.append(f"    assert (!pb_pkg::decode_message_key(._field_number(field_number),")
         lines.append(f"                                        ._wire_type(wire_type),")
         lines.append(f"                                        ._stream(_stream),")
         lines.append(f"                                        ._cursor(_cursor)));")
+        lines.append(f"    if (wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) begin")
+        lines.append(f"        assert (!{PB_PKG}::decode_varint(._value(delimited_length),")
+        lines.append("                                       ._stream(_stream),")
+        lines.append("                                       ._cursor(_cursor)));")
+        lines.append("    end")
+        #lines.append(f"    $display(\"sub field_number=%0d\", field_number);")
         lines.append(f"    case (field_number)")
         lines.extend(self.sv_key.sv_deserialize(indent=6, result_var='found_key', field_number_prefix=field_number_prefix))
         lines.extend(self.sv_value.sv_deserialize(indent=6, result_var='found_value', field_number_prefix=field_number_prefix))
         lines.append(f"      default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));")
         lines.append(f"    endcase")
-        lines.append(f"    {varname}[found_key] = found_value;")
-        lines.append(f"  ")
         lines.append(f"  end")
+        #lines.append(f"  $display(\"{varname}[%0d] = %0d\", found_key, found_value);")
+        # lines.append(f"  $display(\"{varname}[%0d] = %s\", found_key, found_value);")
+        lines.append(f"  {varname}[found_key] = found_value;")
+
         return [" "*indent + line for line in lines]
 
     def sv_serialize_lines(self, indent, varname, field_number_prefix=""):
         lines = []
         substream = f"{varname}_sub_stream"
         lines.append("begin")
-        lines.append(f"  {PB_PKG}::enc_bytestream_t {substream};")
         lines.append(f"  foreach (this.{varname}[xx]) begin")
+        lines.append(f"    {PB_PKG}::enc_bytestream_t {substream};")
         lines.append(f"    {self.sv_key.sv_type} found_key = xx;")
         lines.append(f"    {self.sv_value.sv_type} found_value = this.{varname}[xx];")
         lines.extend(self.sv_key.sv_serialize_lines(indent=4, result_var='found_key', field_number_prefix=field_number_prefix, stream=substream))
         lines.extend(self.sv_value.sv_serialize_lines(indent=4, result_var='found_value', field_number_prefix=field_number_prefix, stream=substream))
-        lines.append(f"  end")
-        lines.append(f"  if (this.{varname}.size()) begin")
         lines.append(f"    {PB_PKG}::encode_delimited(._field_number({varname}__field_number),")
         lines.append(f"                             ._delimited_stream({substream}),")
         lines.append(f"                             ._stream(_stream));")
@@ -639,6 +646,7 @@ def generate_code(request, response):
                 pkg.append("                                           ._cursor(_cursor)));")
                 pkg.append("            delimited_stop = _cursor + delimited_length;")
                 pkg.append("        end")
+                # pkg.append(f"    $display(\"field_number=%0d\", field_number);")
                 pkg.append("        case (field_number)")
                 for f in item.sv_fields:
                     pkg.extend(f.sv_deserialize(indent=10))

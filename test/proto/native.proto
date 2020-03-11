@@ -8,92 +8,97 @@ enum ExampleEnum {
 }
 
 message SubMessage {
-  required ExampleEnum sub_enum = 1;
+  // required ExampleEnum sub_ef = 1;
   optional double tree_hotel = 2;
-  repeated uint32 some_number = 3;
+  // repeated uint32 some_fber = 3;
 }
 
 // Test every type and permutations
 message Hello {
 
-  optional bool bool_0 = 1;
-  required bool bool_1 = 2;
-  repeated bool bool_2 = 3;
-  repeated bool bool_3 = 4 [packed=true];
+  optional bool f1 = 1;
+  required bool f2 = 2;
+  repeated bool f3 = 3;
+  repeated bool f4 = 4 [packed=true];
 
-  optional double double_0 = 5;
-  required double double_1 = 6;
-  repeated double double_2 = 7;
-  repeated double double_3 = 8 [packed=true];
+  optional double f5 = 5;
+  required double f6 = 6;
+  repeated double f7 = 7;
+  repeated double f8 = 8 [packed=true];
 
-  optional fixed32 fixed32_0 = 9;
-  required fixed32 fixed32_1 = 10;
-  repeated fixed32 fixed32_2 = 11;
-  repeated fixed32 fixed32_3 = 12 [packed=true];
+  optional fixed32 f9  = 9;
+  required fixed32 f10 = 10;
+  repeated fixed32 f11 = 11;
+  repeated fixed32 f12 = 12 [packed=true];
 
-  optional fixed64 fixed64_0 = 13;
-  required fixed64 fixed64_1 = 14;
-  repeated fixed64 fixed64_2 = 15;
-  repeated fixed64 fixed64_3 = 16 [packed=true];
+  optional fixed64 f13 = 13;
+  required fixed64 f14 = 14;
+  repeated fixed64 f15 = 15;
+  repeated fixed64 f16 = 16 [packed=true];
 
-  optional float float_0 = 17;
-  required float float_1 = 18;
-  repeated float float_2 = 19;
-  repeated float float_3 = 20 [packed=true];
+  optional float f17 = 17;
+  required float f18 = 18;
+  repeated float f19 = 19;
+  repeated float f20 = 20 [packed=true];
+                    
+  optional int32 f21 = 21 [default=-3];
+  required int32 f22 = 22 [default=-5];
+  repeated int32 f23 = 23;
+  repeated int32 f24 = 24 [packed=true];
+                    
+  optional int64 f25 = 25;
+  required int64 f26 = 26;
+  repeated int64 f27 = 27;
+  repeated int64 f28 = 28 [packed=true];
 
-  optional int32 int32_0 = 21 [default=-3];
-  required int32 int32_1 = 22 [default=-5];
-  repeated int32 int32_2 = 23;
-  repeated int32 int32_3 = 24 [packed=true];
+  optional sfixed32 f29 = 29;
+  required sfixed32 f30 = 30;
+  repeated sfixed32 f31 = 31;
+  repeated sfixed32 f32 = 32 [packed=true];
+                       
+  optional sfixed64 f33 = 33;
+  required sfixed64 f34 = 34;
+  repeated sfixed64 f35 = 35;
+  repeated sfixed64 f36 = 36 [packed=true];
 
-  optional int64 int64_0 = 25;
-  required int64 int64_1 = 26;
-  repeated int64 int64_2 = 27;
-  repeated int64 int64_3 = 28 [packed=true];
+  optional sint32 f37 = 37;
+  required sint32 f38 = 38;
+  repeated sint32 f39 = 39;
+  repeated sint32 f40 = 40 [packed=true];
 
-  optional sfixed32 sfixed32_0 = 29;
-  required sfixed32 sfixed32_1 = 30;
-  repeated sfixed32 sfixed32_2 = 31;
-  repeated sfixed32 sfixed32_3 = 32 [packed=true];
+  optional sint64 f41 = 41;
+  required sint64 f42 = 42;
+  repeated sint64 f43 = 43;
+  repeated sint64 f44 = 44 [packed=true];
 
-  optional sfixed64 sfixed64_0 = 33;
-  required sfixed64 sfixed64_1 = 34;
-  repeated sfixed64 sfixed64_2 = 35;
-  repeated sfixed64 sfixed64_3 = 36 [packed=true];
+  optional uint32 f45 = 45;
+  required uint32 f46 = 46;
+  repeated uint32 f47 = 47;
+  repeated uint32 f48 = 48 [packed=true];
 
-  optional sint32 sint32_0 = 37;
-  required sint32 sint32_1 = 38;
-  repeated sint32 sint32_2 = 39;
-  repeated sint32 sint32_3 = 40 [packed=true];
+  optional uint64 f49 = 49;
+  required uint64 f50 = 50;
+  repeated uint64 f51 = 51;
+  repeated uint64 f52 = 52 [packed=true];
 
-  optional sint64 sint64_0 = 41;
-  required sint64 sint64_1 = 42;
-  repeated sint64 sint64_2 = 43;
-  repeated sint64 sint64_3 = 44 [packed=true];
+  optional ExampleEnum f53 = 53 [default=VAL1];
+  required ExampleEnum f54 = 54;
+  repeated ExampleEnum f55 = 55;
 
-  optional uint32 uint32_0 = 45;
-  required uint32 uint32_1 = 46;
-  repeated uint32 uint32_2 = 47;
-  repeated uint32 uint32_3 = 48 [packed=true];
+  optional string f56 = 56 [default="a_default"];
+  required string f57 = 57;
+  repeated string f58 = 58;
 
-  optional uint64 uint64_0 = 49;
-  required uint64 uint64_1 = 50;
-  repeated uint64 uint64_2 = 51;
-  repeated uint64 uint64_3 = 52 [packed=true];
+  optional SubMessage f59 = 59;
+  required SubMessage f60 = 60;
+  repeated SubMessage f61 = 61;
 
-  optional ExampleEnum exampleenum_0 = 53 [default=VAL1];
-  required ExampleEnum exampleenum_1 = 54;
-  repeated ExampleEnum exampleenum_2 = 55;
+  optional bytes f62 = 62 [default="211"];
+  required bytes f63 = 63;
+  repeated bytes f64 = 64;
 
-  optional string string_0 = 56 [default="a_default"];
-  required string string_1 = 57;
-  repeated string string_2 = 58;
-
-  optional SubMessage submessage_0 = 59;
-  required SubMessage submessage_1 = 60;
-  repeated SubMessage submessage_2 = 61;
-
-  optional bytes bytes_0 = 62 [default="211"];
-  required bytes bytes_1 = 63;
-  repeated bytes bytes_2 = 64;
+  map<uint32, SubMessage> f65 = 65;
+  map<uint32, uint32> f66 = 66;
+  map<uint32, string> f67 = 67;
+  map<string, string> f68 = 68;
 }

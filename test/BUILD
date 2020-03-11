@@ -35,6 +35,6 @@ sh_test(
         ":native",
         "native_loopback_test.sv",
     ],
-    args = ["xrun -licqueue -uvm $(locations //:pb_pkg.svh) $(location :native) $(location native_loopback_test.sv)"],
+    args = ["xrun -licqueue -access rwc -linedebug -createdebugdb -uvm $(locations //:pb_pkg.svh) $(location :native) $(location native_loopback_test.sv)"],
     tags = ["xrun"],
 )
