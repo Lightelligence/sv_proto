@@ -315,9 +315,9 @@ class SVFieldDescriptorProto():
     def sv_var_declaration(self):
         if self.sv_map:
             rand = PB_TYPE_NUMBER_TO_RAND[self.sv_map.sv_value.type]
-            return f"    {rand}{self.sv_map.sv_value.sv_type} {self.name}[{self.sv_map.sv_key.sv_type}];"
+            return f"{rand}{self.sv_map.sv_value.sv_type} {self.name}[{self.sv_map.sv_key.sv_type}];"
         else:
-            return f"    {self.sv_rand}{self.sv_type} {self.name}{self.sv_queue}{self.sv_default};"
+            return f"{self.sv_rand}{self.sv_type} {self.name}{self.sv_queue}{self.sv_default};"
 
     @property
     def sv_wire_type(self):
@@ -387,13 +387,17 @@ class SVFieldDescriptorProto():
             if self.label == self.LABEL_REQUIRED:
                 if self.type != FieldDescriptorProto.TYPE_MESSAGE:
                     lines.append(f"  this.{self.name}__is_initialized = 1;")
-
+        if self.HasField("oneof_index"):
+            lines.append(f"  this.{self.sv_oneof_inst} = {self.sv_oneof_value};")
         lines.append(f"end")
         return [" "*indent + line for line in lines]
 
     def sv_serialize_lines(self, indent, stream="_stream", result_var="", field_number_prefix=""):
         lines = []
         # FIXME add assertions that required fields are initialized
+        if self.HasField("oneof_index"):
+            lines.append(f"if ({self.sv_oneof_inst} == {self.sv_oneof_value}) begin")
+
         if self.sv_map:
             lines.extend(self.sv_map.sv_serialize_lines(indent=0, varname=self.name, field_number_prefix=f"{self.name}_"))
         elif self.type == self.TYPE_MESSAGE:
@@ -442,18 +446,22 @@ class SVFieldDescriptorProto():
                 if self.sv_queue:
                     lines.append(f"foreach (this.{self.name}[ii]) begin")
                     lines.append(f"  {self.sv_type} tmp = this.{self.name}[ii];")
-                    result_var = "tmp"
+                    result_var = f"this.{self.name}[ii]"
+
                 else:
-                    lines.append(f"begin")
+                    if not self.HasField("oneof_index"):
+                        lines.append(f"begin")
                     # FIXME skip if optional
                     if not result_var:
-                        lines.append(f"  {self.sv_type} tmp = this.{self.name};")
-                        result_var = "tmp"
+                        result_var = f"this.{self.name}"
                 lines.append(f"  {PB_PKG}::encode_message_key(._field_number(this.{self.sv_number(field_number_prefix)}),")
                 lines.append(f"                             ._wire_type({PB_PKG}::{self.sv_wire_type}),")
                 lines.append(f"                             ._stream({stream}));")
                 lines.append(f"  {PB_PKG}::{self.sv_encode_func}(._value({result_var}), ._stream({stream}));")
-                lines.append("end")
+                if not self.HasField("oneof_index"):
+                    lines.append("end")
+        if self.HasField("oneof_index"):
+            lines.append("end")
         return [' '*indent + line for line in lines]
 
 
@@ -571,15 +579,37 @@ def generate_code(request, response):
             if isinstance(item, DescriptorProto):
 
                 item = SVDescriptorProto(item, package, imports)
-
                 #lines.append(str(dir(FieldDescriptorProto)))
                 pkg.append(f"  class {item.name} extends uvm_object;")
                 pkg.append("")
+
+                pkg.append("    ///////////////////////////////////////////////////////////////////////////")
+                pkg.append("    // Public Variables")
                 
                 for f in item.sv_fields:
                     pkg.append(f"    {f.sv_var_declaration}")
                 pkg.append("")
 
+                pkg.append("    ///////////////////////////////////////////////////////////////////////////")
+                pkg.append("    // Bookkeeping Variables")
+                for i, oneof in enumerate(item.oneof_decl):
+                    oneof_inst = f"oneof__{oneof.name}"
+                    oneof_type = f"{oneof_inst}_e"
+                    pkg.append(f"    typedef enum {{")
+                    pkg.append(f"      {oneof_inst}__uninitialized")
+                    for f in item.sv_fields:
+                        if f.HasField("oneof_index") and \
+                           f.oneof_index == i:
+                            f.sv_oneof_inst = oneof_inst;
+                            f.sv_oneof_value = f"{oneof_inst}__{f.name}"
+                            pkg.append(f"     ,{f.sv_oneof_value}")
+                    pkg.append(f"    }} {oneof_type};")
+                    pkg.append(f"    rand {oneof_type} {oneof_inst} = {oneof_inst}__uninitialized;")
+                    pkg.append(f"    constaint {oneof_inst}_cnstr {{")
+                    pkg.append(f"      {oneof_inst} != {oneof_inst}__uninitialized;")
+                    pkg.append(f"    }}")
+                    pkg.append("")
+                
                 for f in item.sv_fields:
                     pkg.extend(f.sv_number_declaration_lines())
                 pkg.append("")
@@ -669,6 +699,12 @@ def generate_code(request, response):
                             pkg.append(f"      end")
                         else:
                             pkg.append(f"      is_initialized &= this.{f.name}__is_initialized;")
+                for i, oneof in enumerate(item.oneof_decl):
+                    oneof_inst = f"oneof__{oneof.name}"
+                    oneof_type = f"{oneof_inst}_e"
+                    pkg.append(f"      if ({oneof_inst} == {oneof_inst}__uninitialized) begin")
+                    pkg.append(f"        return 0;")
+                    pkg.append(f"      end")
                 pkg.append("    endfunction : is_initialized")
                 pkg.append("")
                 pkg.append("    function void post_randomize();")
@@ -708,7 +744,6 @@ def traverse(proto_file):
 
     def _traverse(package, items):
         for item in items:
-
             yield item, package
 
             if isinstance(item, DescriptorProto):
@@ -731,7 +766,11 @@ def traverse(proto_file):
 if __name__ == '__main__':
     # Read request message from stdin
     data = sys.stdin.buffer.read()
-    # with open("stdin.txt", 'rb') as f:
+
+    with open("/u/wstucker/w/mosaic/sv_proto/stdin.txt", 'wb') as f:
+        f.write(data)
+
+    # with open("/u/wstucker/w/mosaic/sv_proto/stdin.txt", 'rb') as f:
     #     data = f.read()
 
     # Parse request
@@ -749,3 +788,4 @@ if __name__ == '__main__':
 
     # Write to stdout
     sys.stdout.buffer.write(output)
+
