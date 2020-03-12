@@ -605,7 +605,7 @@ def generate_code(request, response):
                             pkg.append(f"     ,{f.sv_oneof_value}")
                     pkg.append(f"    }} {oneof_type};")
                     pkg.append(f"    rand {oneof_type} {oneof_inst} = {oneof_inst}__uninitialized;")
-                    pkg.append(f"    constaint {oneof_inst}_cnstr {{")
+                    pkg.append(f"    constraint {oneof_inst}_cnstr {{")
                     pkg.append(f"      {oneof_inst} != {oneof_inst}__uninitialized;")
                     pkg.append(f"    }}")
                     pkg.append("")
