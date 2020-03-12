@@ -31,10 +31,11 @@ sh_test(
     data = [
         "//:pb_pkg.svh",
         "//:pb",
+        "//:pb_socket.so",
         ":native",
         "native_loopback_test.sv",
     ],
-    args = ["xrun -licqueue -access rwc -linedebug -createdebugdb -uvm $(locations //:pb_pkg.svh) $(location :native) $(location native_loopback_test.sv)"],
+    args = ["xrun -64 -licqueue -access rwc -linedebug -createdebugdb -uvm -sv_lib $(location //:pb_socket.so) $(locations //:pb_pkg.svh) $(location :native) $(location native_loopback_test.sv)"],
     tags = ["xrun"],
 )
 
