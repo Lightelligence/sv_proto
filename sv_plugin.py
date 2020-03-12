@@ -614,8 +614,9 @@ def generate_code(request, response):
                     pkg.extend(f.sv_number_declaration_lines())
                 pkg.append("")
 
-                for f in item.sv_fields:
-                    pkg.append(f"    local const {PB_PKG}::label_e {f.name}__label = {PB_PKG}::{f.sv_label};")
+                # Haven't actually had a need for this yet
+                # for f in item.sv_fields:
+                #     pkg.append(f"    local const {PB_PKG}::label_e {f.name}__label = {PB_PKG}::{f.sv_label};")
                 pkg.append("")
 
                 # TODO
