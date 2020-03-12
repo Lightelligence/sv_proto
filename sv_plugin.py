@@ -380,13 +380,13 @@ class SVFieldDescriptorProto():
                 lines.append(f"    assert (!{PB_PKG}::{self.sv_decode_func}(._result({result_var}), ._stream(_stream), ._cursor(_cursor)));")
                 if self.type == self.TYPE_ENUM:
                     result_var = result_var_enum
-                    lines.append(f"  {result_var} = {self.sv_type}'(tmp_varint);")
+                    lines.append(f"    {result_var} = {self.sv_type}'(tmp_varint);")
                 if self.sv_queue:
                     lines.append(f"    this.{self.name}.push_back({result_var});")
                 lines.append(f"  end while ((wire_type == {PB_PKG}::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));")
             if self.label == self.LABEL_REQUIRED:
                 if self.type != FieldDescriptorProto.TYPE_MESSAGE:
-                    lines.append(f"  this.{self.name}__is_initialized = 1;")
+                    lines.append(f"  this.m_is_initialized[\"{self.name}\"] = 1;")
         if self.HasField("oneof_index"):
             lines.append(f"  this.{self.sv_oneof_inst} = {self.sv_oneof_value};")
         lines.append(f"end")
@@ -622,10 +622,7 @@ def generate_code(request, response):
                 # Not sure how to set these if not randomizing the object
                 # Using getters/setters isn't worthwhile if the member is local
                 # Making the member local makes it more difficult to randomize
-                for f in item.sv_fields:
-                    # Message fields should be calculated recursively
-                    if f.type != FieldDescriptorProto.TYPE_MESSAGE:
-                        pkg.append(f"    bit {f.name}__is_initialized = 0;")
+                pkg.append("    bit m_is_initialized[string];");
                 pkg.append("")
 
                 pkg.append(f"    `uvm_object_utils_begin({item.name})")
@@ -635,6 +632,11 @@ def generate_code(request, response):
                 pkg.append("")
                 pkg.append(f"    function new(string name=\"{item.name}\");")
                 pkg.append("       super.new(.name(name));")
+                for f in item.sv_fields:
+                    if f.label == f.LABEL_REQUIRED:
+                      # Message fields should be calculated recursively, do they don't need an entry in this map
+                      if f.type != FieldDescriptorProto.TYPE_MESSAGE:
+                          pkg.append(f"    this.m_is_initialized[\"{f.name}\"] = 0;")
                 pkg.append("    endfunction : new")
                 pkg.append("")
                 pkg.append(f"    function void serialize(ref {PB_PKG}::bytestream_t _stream);")
@@ -683,27 +685,35 @@ def generate_code(request, response):
                 pkg.append("          assert (_cursor == delimited_stop) else $display(\"_cursor: %0d delimited_stop: %0d\", _cursor, delimited_stop);")
                 pkg.append("        end")
                 pkg.append("      end")
-                pkg.append("      assert (this.is_initialized());")
+                pkg.append("      if (!this.is_initialized()) begin")
+                pkg.append("        `uvm_error(this.get_name(), \"Deserialize didn't result in proper initialization\")")
+                pkg.append("      end")
                 pkg.append("    endfunction : _deserialize")
                 pkg.append("")
                 pkg.append("    function bit is_initialized();")
                 pkg.append("      is_initialized = 1;")
+                pkg.append("      foreach (this.m_is_initialized[field_name]) begin")
+                pkg.append("        if (!this.m_is_initialized[field_name]) begin")
+                pkg.append("          `uvm_warning(this.get_name(), $sformatf(\"required field '%s' was not initialized\", field_name))")
+                pkg.append("          is_initialized = 0;")
+                pkg.append("        end")
+                pkg.append("      end")
                 for f in item.sv_fields:
                     if f.label == f.LABEL_REQUIRED:
                         if f.type == FieldDescriptorProto.TYPE_MESSAGE:
                             pkg.append(f"      if (this.{f.name} == null) begin")
-                            pkg.append(f"        return 0;")
+                            pkg.append(f"        `uvm_warning(this.get_name(), \"required field '{f.name}' is null\")")
+                            pkg.append(f"        is_initialized = 0;")
                             pkg.append(f"      end")
                             pkg.append(f"      else begin")
                             pkg.append(f"        is_initialized &= this.{f.name}.is_initialized();")
                             pkg.append(f"      end")
-                        else:
-                            pkg.append(f"      is_initialized &= this.{f.name}__is_initialized;")
                 for i, oneof in enumerate(item.oneof_decl):
                     oneof_inst = f"oneof__{oneof.name}"
                     oneof_type = f"{oneof_inst}_e"
                     pkg.append(f"      if ({oneof_inst} == {oneof_inst}__uninitialized) begin")
-                    pkg.append(f"        return 0;")
+                    pkg.append(f"        `uvm_warning(this.get_name(), \"oneof '{oneof.name}' has no initialized member\")")
+                    pkg.append(f"        is_initialized = 0;")
                     pkg.append(f"      end")
                 pkg.append("    endfunction : is_initialized")
                 pkg.append("")
@@ -714,7 +724,7 @@ def generate_code(request, response):
                         # What about strings and floats?
                         # What about rand_mode(0) fields?
                         if f.type != FieldDescriptorProto.TYPE_MESSAGE:
-                            pkg.append(f"      this.{f.name}__is_initialized = 1;")
+                            pkg.append(f"      this.m_is_initialized[\"{f.name}\"] = 1;")
                 pkg.append("    endfunction : post_randomize")
 
                 pkg.append("")
