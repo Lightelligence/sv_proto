@@ -8,9 +8,16 @@ enum ExampleEnum {
 }
 
 message SubMessage {
-  // required ExampleEnum sub_ef = 1;
-  optional double tree_hotel = 2;
-  // repeated uint32 some_fber = 3;
+  oneof oo0 {
+    float f1 = 1;
+    uint32 f2 = 2;
+    ExampleEnum f3 = 3;
+  }
+  oneof oo1 {
+    string f4 = 4;
+    uint64 f5 = 5;
+    ExampleEnum f6 = 6;
+  }
 }
 
 // Test every type and permutations
