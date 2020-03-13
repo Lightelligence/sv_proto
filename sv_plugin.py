@@ -91,68 +91,6 @@ PB_TYPE_NUMBER_TO_SV_TYPE = {
     FieldDescriptorProto.TYPE_UINT64   : 'longint unsigned',
 }    
 
-PB_TYPE_NUMBER_TO_UVM_FIELD_MACRO = {
-    FieldDescriptorProto.TYPE_BOOL    : 'uvm_field_int',
-    FieldDescriptorProto.TYPE_BYTES   : 'uvm_field_array_int',
-    FieldDescriptorProto.TYPE_DOUBLE  : 'uvm_field_real',
-    FieldDescriptorProto.TYPE_ENUM    : 'uvm_field_enum',
-    FieldDescriptorProto.TYPE_FIXED32 : 'uvm_field_int',
-    FieldDescriptorProto.TYPE_FIXED64 : 'uvm_field_int',
-    FieldDescriptorProto.TYPE_FLOAT   : 'uvm_field_real',
-  # FieldDescriptorProto.TYPE_GROUP   : '',
-    FieldDescriptorProto.TYPE_INT32   : 'uvm_field_int',
-    FieldDescriptorProto.TYPE_INT64   : 'uvm_field_int',
-    FieldDescriptorProto.TYPE_MESSAGE : 'uvm_field_object',
-    FieldDescriptorProto.TYPE_SFIXED32: 'uvm_field_int',
-    FieldDescriptorProto.TYPE_SFIXED64: 'uvm_field_int',
-    FieldDescriptorProto.TYPE_SINT32  : 'uvm_field_int',
-    FieldDescriptorProto.TYPE_SINT64  : 'uvm_field_int',
-    FieldDescriptorProto.TYPE_STRING  : 'uvm_field_string',
-    FieldDescriptorProto.TYPE_UINT32  : 'uvm_field_int',
-    FieldDescriptorProto.TYPE_UINT64  : 'uvm_field_int',
-}
-
-PB_TYPE_NUMBER_REPEATED_TO_UVM_FIELD_MACRO = {
-    FieldDescriptorProto.TYPE_BOOL    : 'uvm_field_queue_int',
-    FieldDescriptorProto.TYPE_BYTES   : '',
-    FieldDescriptorProto.TYPE_DOUBLE  : '',
-    FieldDescriptorProto.TYPE_ENUM    : 'uvm_field_queue_enum',
-    FieldDescriptorProto.TYPE_FIXED32 : 'uvm_field_queue_int',
-    FieldDescriptorProto.TYPE_FIXED64 : 'uvm_field_queue_int',
-    FieldDescriptorProto.TYPE_FLOAT   : '',
-  # FieldDescriptorProto.TYPE_GROUP   : '',
-    FieldDescriptorProto.TYPE_INT32   : 'uvm_field_queue_int',
-    FieldDescriptorProto.TYPE_INT64   : 'uvm_field_queue_int',
-    FieldDescriptorProto.TYPE_MESSAGE : 'uvm_field_queue_object',
-    FieldDescriptorProto.TYPE_SFIXED32: 'uvm_field_queue_int',
-    FieldDescriptorProto.TYPE_SFIXED64: 'uvm_field_queue_int',
-    FieldDescriptorProto.TYPE_SINT32  : 'uvm_field_queue_int',
-    FieldDescriptorProto.TYPE_SINT64  : 'uvm_field_queue_int',
-    FieldDescriptorProto.TYPE_STRING  : 'uvm_field_queue_string',
-    FieldDescriptorProto.TYPE_UINT32  : 'uvm_field_queue_int',
-    FieldDescriptorProto.TYPE_UINT64  : 'uvm_field_queue_int',
-}
-
-UVM_AVAILABLE_AA_MACROS = [
-    "uvm_field_aa_int_string",
-    "uvm_field_aa_string_string",
-    "uvm_field_aa_object_string",
-    "uvm_field_aa_int_int",
-    "uvm_field_aa_int_int",
-    "uvm_field_aa_int_int_unsigned",
-    "uvm_field_aa_int_integer",
-    "uvm_field_aa_int_integer_unsigned",
-    "uvm_field_aa_int_byte",
-    "uvm_field_aa_int_byte_unsigned",
-    "uvm_field_aa_int_shortint",
-    "uvm_field_aa_int_shortint_unsigned",
-    "uvm_field_aa_int_longint",
-    "uvm_field_aa_int_longint_unsigned",
-    "uvm_field_aa_int_key",
-    "uvm_field_aa_string_int",
-    "uvm_field_aa_object_int",
-]
-
 # See if type should be randomized
 PB_TYPE_NUMBER_TO_RAND = {
     FieldDescriptorProto.TYPE_BOOL     : 'rand ',
@@ -173,12 +111,6 @@ PB_TYPE_NUMBER_TO_RAND = {
     FieldDescriptorProto.TYPE_STRING   : '',
     FieldDescriptorProto.TYPE_UINT32   : 'rand ',
     FieldDescriptorProto.TYPE_UINT64   : 'rand ',
-}
-
-PB_LABEL_TO_ENUM = {
-    FieldDescriptorProto.LABEL_OPTIONAL : "LABEL_OPTIONAL",
-    FieldDescriptorProto.LABEL_REQUIRED : "LABEL_REQUIRED",
-    FieldDescriptorProto.LABEL_REPEATED : "LABEL_REPEATED",
 }
 
 class GeneratedPackage():
@@ -289,29 +221,6 @@ class SVFieldDescriptorProto():
         return f"encode_{self.sv_xxcode_func}"
 
     @property
-    def sv_label(self):
-        return f"{PB_LABEL_TO_ENUM[self.label]}"
-
-    @property
-    def sv_field_macro(self):
-        if self.sv_map:
-            return self.sv_map.sv_field_macro
-        if self.label == self.LABEL_REPEATED:
-            macro_type = PB_TYPE_NUMBER_REPEATED_TO_UVM_FIELD_MACRO[self.type]
-        else:
-            macro_type = PB_TYPE_NUMBER_TO_UVM_FIELD_MACRO[self.type]
-        if macro_type == '':
-            return ""
-        return f"`{macro_type}({self.sv_field_macro_args})"
-
-    @property
-    def sv_field_macro_args(self):
-        if self.type == FieldDescriptorProto.TYPE_ENUM:
-            return f"{self.sv_type}, {self.name}, UVM_ALL_ON"
-        else:
-            return f"{self.name}, UVM_ALL_ON"
-
-    @property
     def sv_var_declaration(self):
         if self.sv_map:
             rand = PB_TYPE_NUMBER_TO_RAND[self.sv_map.sv_value.type]
@@ -332,6 +241,80 @@ class SVFieldDescriptorProto():
         if self.sv_map:
             lines.extend(self.sv_map.sv_number_declaration_lines(prefix=f"{self.name}_"))
         return lines
+
+    def sv_do_compare_lines(self, indent=0, varname=""):
+        lines = []
+        if self.sv_map:
+            lines.extend(self.sv_map.sv_do_compare_lines(indent=2, varname=self.name))
+        else:
+            if not varname:
+                varname = self.name
+            if self.type == self.TYPE_MESSAGE:
+                if self.label == self.LABEL_REPEATED:
+                    lines.append(f"res &= (this.{self.name}.size() == rhs_cast.{self.name}.size());")
+                    lines.append(f"foreach (this.{self.name}[xx]) begin")
+                    varname = f"{self.name}[xx]"
+                lines.append(f"  res &= this.{varname}.do_compare(rhs_cast.{varname}, comparer);")
+                if self.label == self.LABEL_REPEATED:
+                    lines.append("end")
+            else:
+                lines.append(f"res &= (this.{varname} == rhs_cast.{varname});")
+        return [" "*indent + line for line in lines]
+
+    def sv_do_print_lines(self, indent=4, var="", var_name=""):
+        lines = []
+        if not var:
+            var = f"this.{self.name}"
+            var_name = f'"{self.name}"'
+        orig_var = var
+        if self.label == self.LABEL_REPEATED:
+            lines.append(f"printer.print_array_header(\"{var}\", {var}.size());")
+            lines.append(f"foreach({var}[xx]) begin")
+            if not self.sv_map:
+                var = f"{var}[xx]"
+                var_name = f'$sformatf("%0d", xx)'
+        if self.sv_map:
+            lines.extend(self.sv_map.sv_do_print_lines(indent=2, var_name=self.name))
+        elif self.type == self.TYPE_MESSAGE:
+            lines.append(f"  printer.print_object({var_name}, {var});")
+        elif self.type in [self.TYPE_STRING]:
+            lines.append(f"  printer.print_string({var_name}, {var});")
+        elif self.type in [self.TYPE_BYTES]:
+            lines.append(f"  printer.print_generic({var_name}, \"bytes\", {var}.size(), $sformatf(\"%p\", {var}));")
+        elif self.type in [self.TYPE_FLOAT, self.TYPE_DOUBLE]:
+            lines.append(f"  printer.print_real({var_name}, {var});")
+        else:
+            if self.type in [self.TYPE_BOOL]:
+                size = 1
+                radix = "UVM_BIN"
+            elif self.type in [self.TYPE_FIXED32,
+                               self.TYPE_INT32,
+                               self.TYPE_SFIXED32,
+                               self.TYPE_SINT32]:
+                size = 32
+                radix = "UVM_DEC"
+            elif self.type in [self.TYPE_UINT32]:
+                size = 32
+                radix = "UVM_HEX"
+            elif self.type in [self.TYPE_FIXED64,
+                               self.TYPE_INT64,
+                               self.TYPE_SFIXED64,
+                               self.TYPE_SINT64]:
+                size = 64
+                radix = "UVM_DEC"
+            elif self.type in [self.TYPE_UINT64]:
+                size = 64
+                radix = "UVM_HEX"
+            elif self.type in [self.TYPE_ENUM]:
+                size = 32
+                radix = "UVM_ENUM"
+            else:
+                raise ValueError("Unknown field type")
+            lines.append(f"  printer.print_field_int({var_name}, {var}, {size}, {radix});")
+        if self.label == self.LABEL_REPEATED:
+            lines.append("end")
+            lines.append(f"printer.print_array_footer({orig_var}.size());")
+        return [" "*indent + line for line in lines]
 
     @property
     def sv_default(self):
@@ -501,13 +484,24 @@ class SVMapDescriptorProto(SVDescriptorProto):
             lines.append(f"    local const {PB_PKG}::field_number_t {prefix}{f.sv_number()} = {f.number};")
         return lines
 
-    @property
-    def sv_field_macro(self):
-        # TODO maybe make this more permissive (e.g. allow string->int on integer types)
-        macro = f"`uvm_field_aa_{self.sv_key.sv_type}_{self.sv_value.sv_type.replace(' ', '_')}"
-        if macro in UVM_AVAILABLE_AA_MACROS:
-            return macro
-        return ""
+    def sv_do_print_lines(self, indent=0, var_name=""):
+        lines = []
+        lines.extend(self.sv_key.sv_do_print_lines(indent=indent, var='xx', var_name='"key"'))
+        lines.extend(self.sv_value.sv_do_print_lines(indent=indent, var=f"{var_name}[xx]", var_name='"value"'))
+        return [" "*indent + line for line in lines]
+
+    def sv_do_compare_lines(self, indent=0, varname=""):
+        lines = []
+        lines.append(f"res &= (this.{varname}.size() == rhs_cast.{varname}.size());")
+        lines.append(f"foreach (this.{varname}[xx]) begin")
+        lines.append(f"  if (!rhs_cast.{varname}.exists(xx)) begin")
+        lines.append(f"    res = 0;")
+        lines.append(f"  end")
+        lines.append(f"  else begin")
+        lines.extend(self.sv_value.sv_do_compare_lines(indent=4, varname=f"{varname}[xx]"))
+        lines.append(f"  end")
+        lines.append(f"end")
+        return [" "*indent + line for line in lines]
 
     def sv_deserialize(self, indent, varname, field_number_prefix):
         lines = []
@@ -614,11 +608,6 @@ def generate_code(request, response):
                     pkg.extend(f.sv_number_declaration_lines())
                 pkg.append("")
 
-                # Haven't actually had a need for this yet
-                # for f in item.sv_fields:
-                #     pkg.append(f"    local const {PB_PKG}::label_e {f.name}__label = {PB_PKG}::{f.sv_label};")
-                pkg.append("")
-
                 # TODO
                 # Not sure how to set these if not randomizing the object
                 # Using getters/setters isn't worthwhile if the member is local
@@ -626,10 +615,7 @@ def generate_code(request, response):
                 pkg.append("    bit m_is_initialized[string];");
                 pkg.append("")
 
-                pkg.append(f"    `uvm_object_utils_begin({item.name})")
-                for f in item.sv_fields:
-                        pkg.append(f"      {f.sv_field_macro}")
-                pkg.append("    `uvm_object_utils_end")
+                pkg.append(f"    `uvm_object_utils({item.name})")
                 pkg.append("")
                 pkg.append(f"    function new(string name=\"{item.name}\");")
                 pkg.append("       super.new(.name(name));")
@@ -727,7 +713,51 @@ def generate_code(request, response):
                         if f.type != FieldDescriptorProto.TYPE_MESSAGE:
                             pkg.append(f"      this.m_is_initialized[\"{f.name}\"] = 1;")
                 pkg.append("    endfunction : post_randomize")
-
+                pkg.append("")
+                pkg.append(f"  virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);")
+                pkg.append(f"    bit res;")
+                pkg.append(f"    {item.name} rhs_cast;")
+                pkg.append(f"    $cast(rhs_cast, rhs);")
+                pkg.append(f"    res = super.do_compare(rhs, comparer);")
+                for i, oneof in enumerate(item.oneof_decl):
+                    pkg.append(f"    case (this.oneof__{oneof.name})")
+                    for f in item.sv_fields:
+                        if f.HasField("oneof_index") and f.oneof_index == i:
+                            pkg.append(f"      {f.sv_oneof_value}: begin")
+                            pkg.extend(f.sv_do_compare_lines(indent=6))
+                            pkg.append("end")
+                    pkg.append("      default: begin")
+                    pkg.append("        `uvm_error(this.get_name(), \"oneof_{oneof.name} uninitialized in do_compare\")")
+                    pkg.append("        res = 0;")
+                    pkg.append("      end")
+                    pkg.append("    endcase")
+                for f in item.sv_fields:
+                    if f.HasField("oneof_index"):
+                        pass # Created above when looping through oneofs
+                    else:
+                        pkg.extend(f.sv_do_compare_lines(indent=2))
+                pkg.append(f"    return res;")
+                pkg.append(f"  endfunction : do_compare")
+                pkg.append("")
+                pkg.append("  virtual function void do_print( uvm_printer printer );")
+                pkg.append("    super.do_print( printer );")
+                for i, oneof in enumerate(item.oneof_decl):
+                    pkg.append(f"    case (this.oneof__{oneof.name})")
+                    for f in item.sv_fields:
+                        if f.HasField("oneof_index") and f.oneof_index == i:
+                            pkg.append(f"      {f.sv_oneof_value}: begin")
+                            pkg.extend(f.sv_do_print_lines(indent=8))
+                            pkg.append(f"      end")
+                    pkg.append("      default: begin")
+                    pkg.append("        `uvm_error(this.get_name(), \"oneof_{oneof.name} uninitialized in do_print\")")
+                    pkg.append("      end")
+                    pkg.append("    endcase")
+                for f in item.sv_fields:
+                    if f.HasField("oneof_index"):
+                        pass # Created above when looping through oneofs
+                    else:
+                        pkg.extend(f.sv_do_print_lines(indent=4))
+                pkg.append("  endfunction : do_print")
                 pkg.append("")
                 pkg.append(f"  endclass : {item.name}")
                 pkg.append("")
@@ -778,8 +808,8 @@ if __name__ == '__main__':
     # Read request message from stdin
     data = sys.stdin.buffer.read()
 
-    with open("/u/wstucker/w/mosaic/sv_proto/stdin.txt", 'wb') as f:
-        f.write(data)
+    # with open("/u/wstucker/w/mosaic/sv_proto/stdin.txt", 'wb') as f:
+    #     f.write(data)
 
     # with open("/u/wstucker/w/mosaic/sv_proto/stdin.txt", 'rb') as f:
     #     data = f.read()
