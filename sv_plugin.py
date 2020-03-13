@@ -254,7 +254,13 @@ class SVFieldDescriptorProto():
                     lines.append(f"res &= (this.{self.name}.size() == rhs_cast.{self.name}.size());")
                     lines.append(f"foreach (this.{self.name}[xx]) begin")
                     varname = f"{self.name}[xx]"
-                lines.append(f"  res &= this.{varname}.do_compare(rhs_cast.{varname}, comparer);")
+                lines.append(f"  if ((this.{varname} != null) && (rhs_cast.{varname} != null)) begin")
+                lines.append(f"    res &= this.{varname}.do_compare(rhs_cast.{varname}, comparer);")
+                lines.append(f"  end else begin")
+                lines.append(f"    if ((this.{varname} != null) || (rhs_cast.{varname} != null)) begin")
+                lines.append(f"      res = 0;")
+                lines.append(f"    end")
+                lines.append(f"  end")
                 if self.label == self.LABEL_REPEATED:
                     lines.append("end")
             else:
