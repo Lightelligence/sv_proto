@@ -52,7 +52,6 @@ class PBSocket():
 def main(socket_name):
     s = PBSocket(socket_name)
     h = s.receive()
-    h.f1 = True
     print(h)
     s.transmit(h)
 

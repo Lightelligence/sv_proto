@@ -14,7 +14,7 @@ sh_test(
         "//:pb_encode.svh",
         "pb_pkg_test.sv",
     ],
-    args = ["xrun -licqueue -uvm $(locations //:pb_pkg.svh) $(location pb_pkg_test.sv)"],
+    args = ["xrun -licqueue -uvm -uvmhome CDNS-1.2 $(locations //:pb_pkg.svh) $(location pb_pkg_test.sv)"],
     tags = ["xrun"],
 )
 
@@ -35,7 +35,7 @@ sh_test(
         ":native",
         "native_loopback_test.sv",
     ],
-    args = ["xrun -64 -licqueue -access rwc -linedebug -createdebugdb -uvm -sv_lib $(location //:pb_socket.so) $(locations //:pb_pkg.svh) $(location :native) $(location native_loopback_test.sv)"],
+    args = ["xrun -64 -licqueue -uvm -uvmhome CDNS-1.2 -access rwc -linedebug -createdebugdb -sv_lib $(location //:pb_socket.so) $(locations //:pb_pkg.svh) $(location :native) $(location native_loopback_test.sv)"],
     tags = ["xrun"],
 )
 
@@ -57,6 +57,6 @@ sh_test(
         "native_cross_language_test.sv",
         ":cross_language",
     ],
-    args = ["xrun -64 -licqueue -access rwc -linedebug -createdebugdb -uvm -sv_lib $(location //:pb_socket.so) $(locations //:pb_pkg.svh) $(location :native) $(location native_cross_language_test.sv)"],
+    args = ["xrun -64 -licqueue -uvm -uvmhome CDNS-1.2 -access rwc -linedebug -createdebugdb -sv_lib $(location //:pb_socket.so) $(locations //:pb_pkg.svh) $(location :native) $(location native_cross_language_test.sv)"],
     tags = ["xrun"],
 )
