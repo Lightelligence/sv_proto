@@ -13,25 +13,24 @@ package example;
 
   class Hello extends uvm_object;
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Public Variables
     rand Greeting greeting;
     string name;
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Bookkeeping Variables
     local const pb_pkg::field_number_t greeting__field_number = 1;
     local const pb_pkg::field_number_t name__field_number = 2;
 
-    local const pb_pkg::label_e greeting__label = pb_pkg::LABEL_REQUIRED;
-    local const pb_pkg::label_e name__label = pb_pkg::LABEL_REQUIRED;
+    bit m_is_initialized[string];
 
-    bit greeting__is_initialized = 0;
-    bit name__is_initialized = 0;
-
-    `uvm_object_utils_begin(Hello)
-      `uvm_field_enum(Greeting, greeting, UVM_ALL_ON)
-      `uvm_field_string(name, UVM_ALL_ON)
-    `uvm_object_utils_end
+    `uvm_object_utils(Hello)
 
     function new(string name="Hello");
        super.new(.name(name));
+    this.m_is_initialized["greeting"] = 0;
+    this.m_is_initialized["name"] = 0;
     endfunction : new
 
     function void serialize(ref pb_pkg::bytestream_t _stream);
@@ -41,20 +40,18 @@ package example;
     endfunction : serialize
 
     function void _serialize(ref pb_pkg::enc_bytestream_t _stream);
-       assert (this.is_initialized());
+      assert (this.is_initialized());
       begin
-        Greeting tmp = this.greeting;
         pb_pkg::encode_message_key(._field_number(this.greeting__field_number),
                                    ._wire_type(pb_pkg::WIRE_TYPE_VARINT),
                                    ._stream(_stream));
-        pb_pkg::encode_type_enum(._value(tmp), ._stream(_stream));
+        pb_pkg::encode_type_enum(._value(this.greeting), ._stream(_stream));
       end
-      begin
-        string tmp = this.name;
+      if (this.name.len()) begin
         pb_pkg::encode_message_key(._field_number(this.name__field_number),
                                    ._wire_type(pb_pkg::WIRE_TYPE_DELIMITED),
                                    ._stream(_stream));
-        pb_pkg::encode_type_string(._value(tmp),
+        pb_pkg::encode_type_string(._value(this.name),
                                    ._stream(_stream));
       end
 
@@ -84,17 +81,23 @@ package example;
             delimited_stop = _cursor + delimited_length;
         end
         case (field_number)
+          ////////////////////////////////
+          // greeting
           greeting__field_number: begin
             assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
             do begin
-              assert (!pb_pkg::decode_type_enum(._result(greeting), ._stream(_stream), ._cursor(_cursor)));
+              pb_pkg::varint_t tmp_varint;
+              assert (!pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor)));
+              greeting = Greeting'(tmp_varint);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
-            this.greeting__is_initialized = 1;
+            this.m_is_initialized["greeting"] = 1;
           end
+          ////////////////////////////////
+          // name
           name__field_number: begin
             assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
             assert (!pb_pkg::decode_type_string(._result(name), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
-            this.name__is_initialized = 1;
+            this.m_is_initialized["name"] = 1;
           end
           default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));
         endcase
@@ -102,18 +105,41 @@ package example;
           assert (_cursor == delimited_stop) else $display("_cursor: %0d delimited_stop: %0d", _cursor, delimited_stop);
         end
       end
-      assert (this.is_initialized());
+      if (!this.is_initialized()) begin
+        `uvm_error(this.get_name(), "Deserialize didn't result in proper initialization")
+      end
     endfunction : _deserialize
 
     function bit is_initialized();
       is_initialized = 1;
-      is_initialized &= this.greeting__is_initialized;
-      is_initialized &= this.name__is_initialized;
+      foreach (this.m_is_initialized[field_name]) begin
+        if (!this.m_is_initialized[field_name]) begin
+          `uvm_warning(this.get_name(), $sformatf("required field '%s' was not initialized", field_name))
+          is_initialized = 0;
+        end
+      end
     endfunction : is_initialized
+
     function void post_randomize();
-      this.greeting__is_initialized = 1;
-      this.name__is_initialized = 1;
+      this.m_is_initialized["greeting"] = 1;
+      this.m_is_initialized["name"] = 1;
     endfunction : post_randomize
+
+  virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);
+    bit res;
+    Hello rhs_cast;
+    $cast(rhs_cast, rhs);
+    res = super.do_compare(rhs, comparer);
+  res &= (this.greeting == rhs_cast.greeting);
+  res &= (this.name == rhs_cast.name);
+    return res;
+  endfunction : do_compare
+
+  virtual function void do_print( uvm_printer printer );
+    super.do_print( printer );
+      printer.print_field_int("greeting", this.greeting, 32, UVM_ENUM);
+      printer.print_string("name", this.name);
+  endfunction : do_print
 
   endclass : Hello
 

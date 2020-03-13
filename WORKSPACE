@@ -11,15 +11,12 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
-
-new_local_repository(
-    name = "xcelium",
-    path = "/tools/cadence/XCELIUM1909/tools.lnx86/include/",
-    build_file_content = """
-filegroup(
-    name = "dpi_headers",
-    srcs = ["svdpi.h", "svdpi_compatibility.h"],
-    visibility = ["//visibility:public"],
+local_repository(
+# git_repository(
+  name = "verilog_tools",
+  path = "../verilog_tools",
+  # tag = "v0.0.4",
+  # remote = "git@ssh.dev.azure.com:v3/LightelligencePlatform/verilog_tools/verilog_tools",
 )
-""",
-)
+load("@verilog_tools//:simulator.bzl", "xcelium_setup")
+xcelium_setup()

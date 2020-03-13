@@ -92,5 +92,6 @@ module tb_top;
       test_message_key_encode_decode();
       test_decode_string();
       test_zigzag();
+      $display("Tests complete");
    end
 endmodule : tb_top

@@ -1,4 +1,5 @@
 load("//:sv_proto.bzl", "sv_proto_library")
+load("@verilog_tools//:dv.bzl", "dv_unit_test")
 
 def golden_test(name):
     """Compares a generated file to a statically checked in file."""
@@ -13,25 +14,18 @@ def golden_test(name):
         size = "small",
         srcs = ["passthrough.sh"],
         data = [
-            ":{}".format(name),
+            ":{}_sv".format(name),
             "golden/{}.proto.sv".format(name),
         ],
-        args = ["diff $(location :{name}) $(location golden/{name}.proto.sv)".format(name=name)],
+        args = ["diff $(location :{name}_sv) $(location golden/{name}.proto.sv)".format(name=name)],
         tags = ["gold"],
     )
 
-    native.sh_test(
+    dv_unit_test(
         name = "{}_compile_test".format(name),
-        size = "small",
-        srcs = ["passthrough.sh"],
-        data = [
+        deps = [
             ":{}".format(name),
-            "//:pb_pkg.svh",
-            "//:pb_decode.svh",
-            "//:pb_encode.svh",
-            ],
-        args = ["xrun -uvm $(location //:pb_pkg.svh) $(location :{name})".format(name=name)],
-        tags = ["xrun"],
+        ],
     )
 
 def golden_test_glob(proto_files):

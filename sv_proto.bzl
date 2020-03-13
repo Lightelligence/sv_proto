@@ -1,3 +1,5 @@
+load("@verilog_tools//:dv.bzl", "dv_lib")
+
 def sv_proto_library(name, srcs):
     """Generate a SystemVerilog file from a .proto file.
     
@@ -7,7 +9,7 @@ def sv_proto_library(name, srcs):
     """
     plugin = "//:sv_plugin.py"
     native.genrule(
-        name = name,
+        name = name + "_sv",
         srcs = srcs,
         outs = [f + ".sv" for f in srcs],
         cmd = "$(location @com_google_protobuf//:protoc) --plugin=protoc-gen-sv=$(location {plugin}) --sv_out=$(@D) $(SRCS)".format(plugin=plugin),
@@ -28,3 +30,10 @@ def sv_proto_library(name, srcs):
     #     gen_cc = False,
     #     gen_py = False,
     # )
+
+    dv_lib(
+        name = name,
+        srcs = [":{}_sv".format(name)],
+        deps = ["//:pb"],
+        in_flist = [":{}_sv".format(name)],
+    )

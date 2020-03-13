@@ -1,8 +1,13 @@
 import pb_pkg::*;
 
 task automatic test();
+   pb_pkg::socket_c socket = pb_pkg::socket_c::type_id::create("socket");
+   string socket_name;
+   $value$plusargs("socket_name=%s", socket_name);
+   $display("socket_name='%s'", socket_name);
+   socket.initialize(socket_name);
+
    for (int ii=0; ii < 1; ii++) begin
-      pb_pkg::socket_c socket = pb_pkg::socket_c::type_id::create("socket");
       pb_pkg::bytestream_t stream0, stream1;
       Hello src = Hello::type_id::create("src");
       Hello dest = Hello::type_id::create("dest");
@@ -15,8 +20,6 @@ task automatic test();
       assert(src.randomize());
 
       src.print();
-      
-      socket.initialize("cross_language_socket");
       src.serialize(stream0);
 
       socket.tx_serialized_message(stream0);
