@@ -7,7 +7,7 @@
 #include <unistd.h> 
 #include <string.h> 
 
-#include "external/xcelium/svdpi.h"
+#include "external/xcelium/tools.lnx86/include/svdpi.h"
 
 using namespace std;
 
