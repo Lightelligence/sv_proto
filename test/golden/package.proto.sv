@@ -5,6 +5,7 @@ package example;
 
   class Hello extends uvm_object;
 
+
     ///////////////////////////////////////////////////////////////////////////
     // Public Variables
     string name;

@@ -174,8 +174,9 @@ def get_ref_type(package, imports, type_name):
 
 class SVFieldDescriptorProto():
     """Helper functions on FieldDescriptorProto specific to this generator."""
-    def __init__(self, f, package, imports, maps):
+    def __init__(self, f, parent, package, imports, maps):
         self.f = f
+        self.parent = parent
         self.package = package
         self.imports = imports
         self.maps = maps
@@ -192,7 +193,14 @@ class SVFieldDescriptorProto():
 
     @property
     def sv_type(self):
-        if self.type == FieldDescriptorProto.TYPE_ENUM or self.type == FieldDescriptorProto.TYPE_MESSAGE:
+        if self.type == FieldDescriptorProto.TYPE_ENUM:
+            for enum in self.parent.enum_type:
+                # This doesn't seem particularly robust...
+                e_type = f".{self.package}.{self.parent.name}.{enum.name}"
+                if self.type_name == e_type:
+                    return enum.name
+            return f"{get_ref_type(self.package, self.imports, self.type_name)}"
+        elif self.type == FieldDescriptorProto.TYPE_MESSAGE:
             return f"{get_ref_type(self.package, self.imports, self.type_name)}"
         else:
             try:
@@ -467,7 +475,7 @@ class SVDescriptorProto():
             if nt.options.map_entry:
                 maps[nt.name] = SVMapDescriptorProto(nt, package, imports)
 
-        self.sv_fields = [SVFieldDescriptorProto(f, package, imports, maps) for f in self.field]
+        self.sv_fields = [SVFieldDescriptorProto(f, self, package, imports, maps) for f in self.field]
 
     def __getattr__(self, attribute):
         try:
@@ -583,6 +591,14 @@ def generate_code(request, response):
                 pkg.append(f"  class {item.name} extends uvm_object;")
                 pkg.append("")
 
+                for enum in item.enum_type:
+                    pkg.append("    typedef enum {")
+                    for last, v in signal_last(enum.value):
+                        pkg.append(f"      {v.name} = {v.number}{',' if not last else ''}")
+                    pkg.append(f"    }} {enum.name};")
+                    pkg.append("")
+
+                pkg.append("")
                 pkg.append("    ///////////////////////////////////////////////////////////////////////////")
                 pkg.append("    // Public Variables")
                 
@@ -794,8 +810,8 @@ def traverse(proto_file):
             yield item, package
 
             if isinstance(item, DescriptorProto):
-                for enum in item.enum_type:
-                    yield enum, package
+                # for enum in item.enum_type:
+                #     yield enum, package
 
                 for nested in item.nested_type:
                     nested_package = package + item.name
