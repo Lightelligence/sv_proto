@@ -7,7 +7,7 @@
 #include <unistd.h> 
 #include <string.h> 
 
-#include "external/xcelium/tools.lnx86/include/svdpi.h"
+#include "svdpi.h"
 
 using namespace std;
 
@@ -40,6 +40,12 @@ int check_array_handle_dimensions(const svOpenArrayHandle h) {
     return 1;
   }
   return 0;
+}
+
+extern "C" void socket_close(int socket_id) {
+  if (shutdown(socket_id, 2)) {
+    cerr << "ERROR: Failed to shutdown socket." << endl;
+  }
 }
 
 extern "C" int socket_write_bytes(int socket_id, const svOpenArrayHandle h) {
