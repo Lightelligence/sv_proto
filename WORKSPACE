@@ -1,3 +1,4 @@
+# -*- mode: python -*-
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
@@ -11,12 +12,12 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
-local_repository(
-# git_repository(
-  name = "verilog_tools",
-  path = "../verilog_tools",
-  # tag = "v0.0.4",
-  # remote = "git@ssh.dev.azure.com:v3/LightelligencePlatform/verilog_tools/verilog_tools",
+git_repository(
+    name = "verilog_tools",
+    path = "../verilog_tools",
+    tag = "v0.0.5",
+    remote = "git@ssh.dev.azure.com:v3/LightelligencePlatform/verilog_tools/verilog_tools",
 )
+
 load("@verilog_tools//:simulator.bzl", "xcelium_setup")
-xcelium_setup()
+xcelium_setup(name="xcelium")

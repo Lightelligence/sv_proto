@@ -9,6 +9,9 @@ py_binary(
 cc_binary(
     name = "pb_socket.so",
     srcs = ["pb_socket.cc", "@xcelium//:dpi_headers"],
+    # Bazel doesn't seem to give access to the headers correctly when this repo
+    # is used as an external
+    copts = ["-I external/xcelium"],
     linkshared=True,
 )
 
