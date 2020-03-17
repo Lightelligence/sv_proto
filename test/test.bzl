@@ -7,6 +7,7 @@ def golden_test(name):
     sv_proto_library(
         name = name,
         srcs = ["proto/{}.proto".format(name)],
+        root_package="//",
     )
 
     native.sh_test(
