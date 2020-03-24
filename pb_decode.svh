@@ -230,7 +230,7 @@ function automatic bit decode_and_consume_unknown(input wire_type_e _wire_type,
      WIRE_TYPE_32BIT: begin
         _cursor += 4;
      end
-     default: assert (0) else $display("Illegal wire type");
+     default: `uvm_fatal("pb_decode", "Illegal wire type")
    endcase
    return retval;
 endfunction : decode_and_consume_unknown
