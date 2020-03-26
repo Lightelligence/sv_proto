@@ -1,13 +1,13 @@
 load("@verilog_tools//:dv.bzl", "dv_lib")
 
-def sv_proto_library(name, srcs, root_package="@sv_proto//"):
+def sv_proto_library(name, srcs):
     """Generate a SystemVerilog file from a .proto file.
     
     Ideally this would be using the proto_gen rule from com_google_protobuf,
     but there seems to be a bug in that rule when using a plugin. Haven't
     actually filed the issue yet.
     """
-    plugin = "{}:sv_plugin.py".format(root_package)
+    plugin = "@sv_proto//:sv_plugin.py"
     outs = [src.rsplit("/", 1)[-1].rsplit(":", 1)[-1]+".sv" for src in srcs]
     native.genrule(
         name = name + "_sv",
@@ -35,6 +35,6 @@ def sv_proto_library(name, srcs, root_package="@sv_proto//"):
     dv_lib(
         name = name,
         srcs = [":{}_sv".format(name)],
-        deps = ["{}:pb".format(root_package)],
+        deps = ["@sv_proto//:pb"],
         in_flist = [":{}_sv".format(name)],
     )
