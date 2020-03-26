@@ -67,7 +67,9 @@
     endfunction : serialize
 
     function void _serialize(ref pb_pkg::enc_bytestream_t _stream);
-      assert (this.is_initialized());
+      if (!this.is_initialized()) begin
+        `uvm_fatal(this.get_name(), "Attempting to serialize, but not initialized")
+      end
       if (oneof__oo0 == oneof__oo0__f1) begin
         pb_pkg::encode_message_key(._field_number(this.f1__field_number),
                                    ._wire_type(pb_pkg::WIRE_TYPE_32BIT),
@@ -117,48 +119,66 @@
     endfunction : deserialize
 
     function void _deserialize(ref pb_pkg::bytestream_t _stream, ref pb_pkg::cursor_t _cursor, input pb_pkg::cursor_t _cursor_stop);
+      pb_pkg::cursor_t cursor_orig = _cursor;
       pb_pkg::cursor_t stream_size = _stream.size();
       while ((_cursor < stream_size) && (_cursor < _cursor_stop)) begin
         pb_pkg::field_number_t field_number;
         pb_pkg::wire_type_e wire_type;
         pb_pkg::varint_t delimited_length;
         pb_pkg::cursor_t delimited_stop;
-        assert (!pb_pkg::decode_message_key(._field_number(field_number),
-                                            ._wire_type(wire_type),
-                                            ._stream(_stream),
-                                            ._cursor(_cursor)));
+        if (pb_pkg::decode_message_key(._field_number(field_number),
+                                          ._wire_type(wire_type),
+                                          ._stream(_stream),
+                                          ._cursor(_cursor))) begin
+            `uvm_fatal(this.get_name(), "Decode_message_key failed")
+         end
         if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin
-            assert (!pb_pkg::decode_varint(._value(delimited_length),
-                                           ._stream(_stream),
-                                           ._cursor(_cursor)));
+            if (pb_pkg::decode_varint(._value(delimited_length),
+                                         ._stream(_stream),
+                                         ._cursor(_cursor))) begin
+               `uvm_fatal(this.get_name(), "decode_varint for WIRE_TYPE_DELIMITED failed")
+             end
             delimited_stop = _cursor + delimited_length;
         end
         case (field_number)
+          0 : `uvm_error(this.get_name(), $sformatf("Extracted field_number==0 which is illegal at cursor %0d in stream\n%p", _cursor, _stream))
           ////////////////////////////////
           // f1
           f1__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_float(._result(f1), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_float(._result(f1), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.oneof__oo0 = oneof__oo0__f1;
           end
           ////////////////////////////////
           // f2
           f2__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_uint32(._result(f2), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_uint32(._result(f2), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.oneof__oo0 = oneof__oo0__f2;
           end
           ////////////////////////////////
           // f3
           f3__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
               pb_pkg::varint_t tmp_varint;
-              assert (!pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               f3 = ExampleEnum'(tmp_varint);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.oneof__oo0 = oneof__oo0__f3;
@@ -166,34 +186,56 @@
           ////////////////////////////////
           // f4
           f4__field_number: begin
-            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
-            assert (!pb_pkg::decode_type_string(._result(f4), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
+            if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
+            if (pb_pkg::decode_type_string(._result(f4), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             this.oneof__oo1 = oneof__oo1__f4;
           end
           ////////////////////////////////
           // f5
           f5__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_uint64(._result(f5), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_uint64(._result(f5), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.oneof__oo1 = oneof__oo1__f5;
           end
           ////////////////////////////////
           // f6
           f6__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
               pb_pkg::varint_t tmp_varint;
-              assert (!pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               f6 = ExampleEnum'(tmp_varint);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.oneof__oo1 = oneof__oo1__f6;
           end
-          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));
+          default : begin
+            if (pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length))) begin
+              `uvm_fatal(this.get_name(), "Failed decode_and_consume_unknown")
+            end
+          end
         endcase
         if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin
-          assert (_cursor == delimited_stop) else $display("_cursor: %0d delimited_stop: %0d", _cursor, delimited_stop);
+          if (_cursor != delimited_stop) begin
+            `uvm_fatal(this.get_name(), "cursor didn't stop at exactly delimited_stop")
+          end
+        end
+        if (_cursor == cursor_orig) begin
+          `uvm_error(this.get_name(), $sformatf("Deserialize loop didn't advance cursor starting at position %0d. Stream follows:\n%p", _cursor, _stream))
+          break;
         end
       end
       if (!this.is_initialized()) begin
@@ -479,7 +521,9 @@ end
     endfunction : serialize
 
     function void _serialize(ref pb_pkg::enc_bytestream_t _stream);
-      assert (this.is_initialized());
+      if (!this.is_initialized()) begin
+        `uvm_fatal(this.get_name(), "Attempting to serialize, but not initialized")
+      end
       begin
         pb_pkg::encode_message_key(._field_number(this.f1__field_number),
                                    ._wire_type(pb_pkg::WIRE_TYPE_VARINT),
@@ -1028,37 +1072,51 @@ end
     endfunction : deserialize
 
     function void _deserialize(ref pb_pkg::bytestream_t _stream, ref pb_pkg::cursor_t _cursor, input pb_pkg::cursor_t _cursor_stop);
+      pb_pkg::cursor_t cursor_orig = _cursor;
       pb_pkg::cursor_t stream_size = _stream.size();
       while ((_cursor < stream_size) && (_cursor < _cursor_stop)) begin
         pb_pkg::field_number_t field_number;
         pb_pkg::wire_type_e wire_type;
         pb_pkg::varint_t delimited_length;
         pb_pkg::cursor_t delimited_stop;
-        assert (!pb_pkg::decode_message_key(._field_number(field_number),
-                                            ._wire_type(wire_type),
-                                            ._stream(_stream),
-                                            ._cursor(_cursor)));
+        if (pb_pkg::decode_message_key(._field_number(field_number),
+                                          ._wire_type(wire_type),
+                                          ._stream(_stream),
+                                          ._cursor(_cursor))) begin
+            `uvm_fatal(this.get_name(), "Decode_message_key failed")
+         end
         if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin
-            assert (!pb_pkg::decode_varint(._value(delimited_length),
-                                           ._stream(_stream),
-                                           ._cursor(_cursor)));
+            if (pb_pkg::decode_varint(._value(delimited_length),
+                                         ._stream(_stream),
+                                         ._cursor(_cursor))) begin
+               `uvm_fatal(this.get_name(), "decode_varint for WIRE_TYPE_DELIMITED failed")
+             end
             delimited_stop = _cursor + delimited_length;
         end
         case (field_number)
+          0 : `uvm_error(this.get_name(), $sformatf("Extracted field_number==0 which is illegal at cursor %0d in stream\n%p", _cursor, _stream))
           ////////////////////////////////
           // f1
           f1__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_bool(._result(f1), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_bool(._result(f1), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f2
           f2__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_bool(._result(f2), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_bool(._result(f2), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f2"] = 1;
           end
@@ -1066,9 +1124,13 @@ end
           // f3
           f3__field_number: begin
             bit tmp_f3;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_bool(._result(tmp_f3), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_bool(._result(tmp_f3), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f3.push_back(tmp_f3);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1076,26 +1138,38 @@ end
           // f4
           f4__field_number: begin
             bit tmp_f4;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_bool(._result(tmp_f4), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_bool(._result(tmp_f4), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f4.push_back(tmp_f4);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f5
           f5__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_double(._result(f5), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_double(._result(f5), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f6
           f6__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_double(._result(f6), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_double(._result(f6), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f6"] = 1;
           end
@@ -1103,9 +1177,13 @@ end
           // f7
           f7__field_number: begin
             real tmp_f7;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_double(._result(tmp_f7), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_double(._result(tmp_f7), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f7.push_back(tmp_f7);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1113,26 +1191,38 @@ end
           // f8
           f8__field_number: begin
             real tmp_f8;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_double(._result(tmp_f8), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_double(._result(tmp_f8), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f8.push_back(tmp_f8);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f9
           f9__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_fixed32(._result(f9), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_fixed32(._result(f9), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f10
           f10__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_fixed32(._result(f10), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_fixed32(._result(f10), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f10"] = 1;
           end
@@ -1140,9 +1230,13 @@ end
           // f11
           f11__field_number: begin
             int unsigned tmp_f11;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_fixed32(._result(tmp_f11), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_fixed32(._result(tmp_f11), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f11.push_back(tmp_f11);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1150,26 +1244,38 @@ end
           // f12
           f12__field_number: begin
             int unsigned tmp_f12;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_fixed32(._result(tmp_f12), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_fixed32(._result(tmp_f12), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f12.push_back(tmp_f12);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f13
           f13__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_fixed64(._result(f13), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_fixed64(._result(f13), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f14
           f14__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_fixed64(._result(f14), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_fixed64(._result(f14), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f14"] = 1;
           end
@@ -1177,9 +1283,13 @@ end
           // f15
           f15__field_number: begin
             longint unsigned tmp_f15;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_fixed64(._result(tmp_f15), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_fixed64(._result(tmp_f15), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f15.push_back(tmp_f15);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1187,26 +1297,38 @@ end
           // f16
           f16__field_number: begin
             longint unsigned tmp_f16;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_fixed64(._result(tmp_f16), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_fixed64(._result(tmp_f16), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f16.push_back(tmp_f16);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f17
           f17__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_float(._result(f17), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_float(._result(f17), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f18
           f18__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_float(._result(f18), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_float(._result(f18), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f18"] = 1;
           end
@@ -1214,9 +1336,13 @@ end
           // f19
           f19__field_number: begin
             shortreal tmp_f19;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_float(._result(tmp_f19), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_float(._result(tmp_f19), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f19.push_back(tmp_f19);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1224,26 +1350,38 @@ end
           // f20
           f20__field_number: begin
             shortreal tmp_f20;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_float(._result(tmp_f20), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_float(._result(tmp_f20), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f20.push_back(tmp_f20);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f21
           f21__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_int32(._result(f21), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_int32(._result(f21), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f22
           f22__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_int32(._result(f22), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_int32(._result(f22), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f22"] = 1;
           end
@@ -1251,9 +1389,13 @@ end
           // f23
           f23__field_number: begin
             int tmp_f23;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_int32(._result(tmp_f23), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_int32(._result(tmp_f23), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f23.push_back(tmp_f23);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1261,26 +1403,38 @@ end
           // f24
           f24__field_number: begin
             int tmp_f24;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_int32(._result(tmp_f24), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_int32(._result(tmp_f24), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f24.push_back(tmp_f24);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f25
           f25__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_int64(._result(f25), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_int64(._result(f25), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f26
           f26__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_int64(._result(f26), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_int64(._result(f26), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f26"] = 1;
           end
@@ -1288,9 +1442,13 @@ end
           // f27
           f27__field_number: begin
             longint tmp_f27;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_int64(._result(tmp_f27), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_int64(._result(tmp_f27), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f27.push_back(tmp_f27);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1298,26 +1456,38 @@ end
           // f28
           f28__field_number: begin
             longint tmp_f28;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_int64(._result(tmp_f28), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_int64(._result(tmp_f28), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f28.push_back(tmp_f28);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f29
           f29__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sfixed32(._result(f29), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sfixed32(._result(f29), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f30
           f30__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sfixed32(._result(f30), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sfixed32(._result(f30), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f30"] = 1;
           end
@@ -1325,9 +1495,13 @@ end
           // f31
           f31__field_number: begin
             int tmp_f31;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sfixed32(._result(tmp_f31), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sfixed32(._result(tmp_f31), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f31.push_back(tmp_f31);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1335,26 +1509,38 @@ end
           // f32
           f32__field_number: begin
             int tmp_f32;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_32BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sfixed32(._result(tmp_f32), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sfixed32(._result(tmp_f32), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f32.push_back(tmp_f32);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f33
           f33__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sfixed64(._result(f33), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sfixed64(._result(f33), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f34
           f34__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sfixed64(._result(f34), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sfixed64(._result(f34), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f34"] = 1;
           end
@@ -1362,9 +1548,13 @@ end
           // f35
           f35__field_number: begin
             longint tmp_f35;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sfixed64(._result(tmp_f35), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sfixed64(._result(tmp_f35), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f35.push_back(tmp_f35);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1372,26 +1562,38 @@ end
           // f36
           f36__field_number: begin
             longint tmp_f36;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_64BIT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sfixed64(._result(tmp_f36), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sfixed64(._result(tmp_f36), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f36.push_back(tmp_f36);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f37
           f37__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sint32(._result(f37), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sint32(._result(f37), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f38
           f38__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sint32(._result(f38), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sint32(._result(f38), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f38"] = 1;
           end
@@ -1399,9 +1601,13 @@ end
           // f39
           f39__field_number: begin
             int tmp_f39;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sint32(._result(tmp_f39), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sint32(._result(tmp_f39), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f39.push_back(tmp_f39);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1409,26 +1615,38 @@ end
           // f40
           f40__field_number: begin
             int tmp_f40;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sint32(._result(tmp_f40), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sint32(._result(tmp_f40), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f40.push_back(tmp_f40);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f41
           f41__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sint64(._result(f41), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sint64(._result(f41), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f42
           f42__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sint64(._result(f42), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sint64(._result(f42), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f42"] = 1;
           end
@@ -1436,9 +1654,13 @@ end
           // f43
           f43__field_number: begin
             longint tmp_f43;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sint64(._result(tmp_f43), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sint64(._result(tmp_f43), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f43.push_back(tmp_f43);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1446,26 +1668,38 @@ end
           // f44
           f44__field_number: begin
             longint tmp_f44;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_sint64(._result(tmp_f44), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_sint64(._result(tmp_f44), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f44.push_back(tmp_f44);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f45
           f45__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_uint32(._result(f45), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_uint32(._result(f45), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f46
           f46__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_uint32(._result(f46), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_uint32(._result(f46), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f46"] = 1;
           end
@@ -1473,9 +1707,13 @@ end
           // f47
           f47__field_number: begin
             int unsigned tmp_f47;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_uint32(._result(tmp_f47), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_uint32(._result(tmp_f47), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f47.push_back(tmp_f47);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1483,26 +1721,38 @@ end
           // f48
           f48__field_number: begin
             int unsigned tmp_f48;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_uint32(._result(tmp_f48), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_uint32(._result(tmp_f48), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f48.push_back(tmp_f48);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f49
           f49__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_uint64(._result(f49), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_uint64(._result(f49), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f50
           f50__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_uint64(._result(f50), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_uint64(._result(f50), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f50"] = 1;
           end
@@ -1510,9 +1760,13 @@ end
           // f51
           f51__field_number: begin
             longint unsigned tmp_f51;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_uint64(._result(tmp_f51), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_uint64(._result(tmp_f51), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f51.push_back(tmp_f51);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
@@ -1520,29 +1774,41 @@ end
           // f52
           f52__field_number: begin
             longint unsigned tmp_f52;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
-              assert (!pb_pkg::decode_type_uint64(._result(tmp_f52), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_uint64(._result(tmp_f52), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               this.f52.push_back(tmp_f52);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f53
           f53__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
               pb_pkg::varint_t tmp_varint;
-              assert (!pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               f53 = ExampleEnum'(tmp_varint);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
           end
           ////////////////////////////////
           // f54
           f54__field_number: begin
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
               pb_pkg::varint_t tmp_varint;
-              assert (!pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               f54 = ExampleEnum'(tmp_varint);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
             this.m_is_initialized["f54"] = 1;
@@ -1551,10 +1817,14 @@ end
           // f55
           f55__field_number: begin
             ExampleEnum tmp_f55;
-            assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+            if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             do begin
               pb_pkg::varint_t tmp_varint;
-              assert (!pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor)));
+              if (pb_pkg::decode_type_enum(._result(tmp_varint), ._stream(_stream), ._cursor(_cursor))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
               tmp_f55 = ExampleEnum'(tmp_varint);
               this.f55.push_back(tmp_f55);
             end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
@@ -1562,35 +1832,51 @@ end
           ////////////////////////////////
           // f56
           f56__field_number: begin
-            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
-            assert (!pb_pkg::decode_type_string(._result(f56), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
+            if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
+            if (pb_pkg::decode_type_string(._result(f56), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
           end
           ////////////////////////////////
           // f57
           f57__field_number: begin
-            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
-            assert (!pb_pkg::decode_type_string(._result(f57), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
+            if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
+            if (pb_pkg::decode_type_string(._result(f57), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             this.m_is_initialized["f57"] = 1;
           end
           ////////////////////////////////
           // f58
           f58__field_number: begin
             string tmp_f58;
-            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
-            assert (!pb_pkg::decode_type_string(._result(tmp_f58), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
+            if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
+            if (pb_pkg::decode_type_string(._result(tmp_f58), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             this.f58.push_back(tmp_f58);
           end
           ////////////////////////////////
           // f59
           f59__field_number: begin
-            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
+            if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             f59 = SubMessage::type_id::create();
             f59._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + delimited_length));
           end
           ////////////////////////////////
           // f60
           f60__field_number: begin
-            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
+            if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             f60 = SubMessage::type_id::create();
             f60._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + delimited_length));
           end
@@ -1598,7 +1884,9 @@ end
           // f61
           f61__field_number: begin
             SubMessage tmp_f61;
-            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
+            if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
             tmp_f61 = SubMessage::type_id::create();
             tmp_f61._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + delimited_length));
             this.f61.push_back(tmp_f61);
@@ -1606,22 +1894,34 @@ end
           ////////////////////////////////
           // f62
           f62__field_number: begin
-            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
-            assert (!pb_pkg::decode_type_bytes(._result(f62), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
+            if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
+            if (pb_pkg::decode_type_bytes(._result(f62), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
           end
           ////////////////////////////////
           // f63
           f63__field_number: begin
-            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
-            assert (!pb_pkg::decode_type_bytes(._result(f63), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
+            if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
+            if (pb_pkg::decode_type_bytes(._result(f63), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             this.m_is_initialized["f63"] = 1;
           end
           ////////////////////////////////
           // f64
           f64__field_number: begin
             pb_pkg::bytestream_t tmp_f64;
-            assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
-            assert (!pb_pkg::decode_type_bytes(._result(tmp_f64), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
+            if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+              `uvm_fatal(this.get_name(), "Unexpected wire_type")
+            end
+            if (pb_pkg::decode_type_bytes(._result(tmp_f64), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length))) begin
+              `uvm_fatal(this.get_name(), "Failed subdecode")
+            end
             this.f64.push_back(tmp_f64);
           end
           ////////////////////////////////
@@ -1629,34 +1929,50 @@ end
           f65__field_number: begin
               int unsigned found_key;
               SubMessage found_value;
-              assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
+              if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+                `uvm_fatal(this.get_name(), "Unexpected wire_type")
+              end
               while ((_cursor < stream_size) && (_cursor < delimited_stop)) begin
-                assert (!pb_pkg::decode_message_key(._field_number(field_number),
+                if (pb_pkg::decode_message_key(._field_number(field_number),
                                                     ._wire_type(wire_type),
                                                     ._stream(_stream),
-                                                    ._cursor(_cursor)));
+                                                    ._cursor(_cursor))) begin
+                `uvm_fatal(this.get_name(), "failed decode_message_key")
+                end
                 if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin
-                    assert (!pb_pkg::decode_varint(._value(delimited_length),
+                    if (pb_pkg::decode_varint(._value(delimited_length),
                                                    ._stream(_stream),
-                                                   ._cursor(_cursor)));
+                                                   ._cursor(_cursor))) begin
+                       `uvm_fatal(this.get_name(), "failed to decode delimited_length")
+                     end
                 end
                 case (field_number)
                   ////////////////////////////////
                   // key
                   f65_key__field_number: begin
-                    assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+                    if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+                      `uvm_fatal(this.get_name(), "Unexpected wire_type")
+                    end
                     do begin
-                      assert (!pb_pkg::decode_type_uint32(._result(found_key), ._stream(_stream), ._cursor(_cursor)));
+                      if (pb_pkg::decode_type_uint32(._result(found_key), ._stream(_stream), ._cursor(_cursor))) begin
+                      `uvm_fatal(this.get_name(), "Failed subdecode")
+                    end
                     end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
                   end
                   ////////////////////////////////
                   // value
                   f65_value__field_number: begin
-                    assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
+                    if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+                      `uvm_fatal(this.get_name(), "Unexpected wire_type")
+                    end
                     found_value = SubMessage::type_id::create();
                     found_value._deserialize(._stream(_stream), ._cursor(_cursor), ._cursor_stop(_cursor + delimited_length));
                   end
-                  default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));
+                  default : begin
+                    if (pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length))) begin
+                      `uvm_fatal(this.get_name(), "Failed decode_and_consume_unknown")
+                    end
+                  end
                 endcase
               end
               f65[found_key] = found_value;
@@ -1666,35 +1982,53 @@ end
           f66__field_number: begin
               int unsigned found_key;
               int unsigned found_value;
-              assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
+              if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+                `uvm_fatal(this.get_name(), "Unexpected wire_type")
+              end
               while ((_cursor < stream_size) && (_cursor < delimited_stop)) begin
-                assert (!pb_pkg::decode_message_key(._field_number(field_number),
+                if (pb_pkg::decode_message_key(._field_number(field_number),
                                                     ._wire_type(wire_type),
                                                     ._stream(_stream),
-                                                    ._cursor(_cursor)));
+                                                    ._cursor(_cursor))) begin
+                `uvm_fatal(this.get_name(), "failed decode_message_key")
+                end
                 if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin
-                    assert (!pb_pkg::decode_varint(._value(delimited_length),
+                    if (pb_pkg::decode_varint(._value(delimited_length),
                                                    ._stream(_stream),
-                                                   ._cursor(_cursor)));
+                                                   ._cursor(_cursor))) begin
+                       `uvm_fatal(this.get_name(), "failed to decode delimited_length")
+                     end
                 end
                 case (field_number)
                   ////////////////////////////////
                   // key
                   f66_key__field_number: begin
-                    assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+                    if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+                      `uvm_fatal(this.get_name(), "Unexpected wire_type")
+                    end
                     do begin
-                      assert (!pb_pkg::decode_type_uint32(._result(found_key), ._stream(_stream), ._cursor(_cursor)));
+                      if (pb_pkg::decode_type_uint32(._result(found_key), ._stream(_stream), ._cursor(_cursor))) begin
+                      `uvm_fatal(this.get_name(), "Failed subdecode")
+                    end
                     end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
                   end
                   ////////////////////////////////
                   // value
                   f66_value__field_number: begin
-                    assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+                    if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+                      `uvm_fatal(this.get_name(), "Unexpected wire_type")
+                    end
                     do begin
-                      assert (!pb_pkg::decode_type_uint32(._result(found_value), ._stream(_stream), ._cursor(_cursor)));
+                      if (pb_pkg::decode_type_uint32(._result(found_value), ._stream(_stream), ._cursor(_cursor))) begin
+                      `uvm_fatal(this.get_name(), "Failed subdecode")
+                    end
                     end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
                   end
-                  default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));
+                  default : begin
+                    if (pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length))) begin
+                      `uvm_fatal(this.get_name(), "Failed decode_and_consume_unknown")
+                    end
+                  end
                 endcase
               end
               f66[found_key] = found_value;
@@ -1704,33 +2038,51 @@ end
           f67__field_number: begin
               int unsigned found_key;
               string found_value;
-              assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
+              if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+                `uvm_fatal(this.get_name(), "Unexpected wire_type")
+              end
               while ((_cursor < stream_size) && (_cursor < delimited_stop)) begin
-                assert (!pb_pkg::decode_message_key(._field_number(field_number),
+                if (pb_pkg::decode_message_key(._field_number(field_number),
                                                     ._wire_type(wire_type),
                                                     ._stream(_stream),
-                                                    ._cursor(_cursor)));
+                                                    ._cursor(_cursor))) begin
+                `uvm_fatal(this.get_name(), "failed decode_message_key")
+                end
                 if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin
-                    assert (!pb_pkg::decode_varint(._value(delimited_length),
+                    if (pb_pkg::decode_varint(._value(delimited_length),
                                                    ._stream(_stream),
-                                                   ._cursor(_cursor)));
+                                                   ._cursor(_cursor))) begin
+                       `uvm_fatal(this.get_name(), "failed to decode delimited_length")
+                     end
                 end
                 case (field_number)
                   ////////////////////////////////
                   // key
                   f67_key__field_number: begin
-                    assert ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT));
+                    if (!((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) || (wire_type == pb_pkg::WIRE_TYPE_VARINT))) begin
+                      `uvm_fatal(this.get_name(), "Unexpected wire_type")
+                    end
                     do begin
-                      assert (!pb_pkg::decode_type_uint32(._result(found_key), ._stream(_stream), ._cursor(_cursor)));
+                      if (pb_pkg::decode_type_uint32(._result(found_key), ._stream(_stream), ._cursor(_cursor))) begin
+                      `uvm_fatal(this.get_name(), "Failed subdecode")
+                    end
                     end while ((wire_type == pb_pkg::WIRE_TYPE_DELIMITED) && (_cursor < delimited_stop));
                   end
                   ////////////////////////////////
                   // value
                   f67_value__field_number: begin
-                    assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
-                    assert (!pb_pkg::decode_type_string(._result(found_value), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
+                    if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+                      `uvm_fatal(this.get_name(), "Unexpected wire_type")
+                    end
+                    if (pb_pkg::decode_type_string(._result(found_value), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length))) begin
+                      `uvm_fatal(this.get_name(), "Failed subdecode")
+                    end
                   end
-                  default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));
+                  default : begin
+                    if (pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length))) begin
+                      `uvm_fatal(this.get_name(), "Failed decode_and_consume_unknown")
+                    end
+                  end
                 endcase
               end
               f67[found_key] = found_value;
@@ -1740,39 +2092,67 @@ end
           f68__field_number: begin
               string found_key;
               string found_value;
-              assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
+              if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+                `uvm_fatal(this.get_name(), "Unexpected wire_type")
+              end
               while ((_cursor < stream_size) && (_cursor < delimited_stop)) begin
-                assert (!pb_pkg::decode_message_key(._field_number(field_number),
+                if (pb_pkg::decode_message_key(._field_number(field_number),
                                                     ._wire_type(wire_type),
                                                     ._stream(_stream),
-                                                    ._cursor(_cursor)));
+                                                    ._cursor(_cursor))) begin
+                `uvm_fatal(this.get_name(), "failed decode_message_key")
+                end
                 if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin
-                    assert (!pb_pkg::decode_varint(._value(delimited_length),
+                    if (pb_pkg::decode_varint(._value(delimited_length),
                                                    ._stream(_stream),
-                                                   ._cursor(_cursor)));
+                                                   ._cursor(_cursor))) begin
+                       `uvm_fatal(this.get_name(), "failed to decode delimited_length")
+                     end
                 end
                 case (field_number)
                   ////////////////////////////////
                   // key
                   f68_key__field_number: begin
-                    assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
-                    assert (!pb_pkg::decode_type_string(._result(found_key), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
+                    if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+                      `uvm_fatal(this.get_name(), "Unexpected wire_type")
+                    end
+                    if (pb_pkg::decode_type_string(._result(found_key), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length))) begin
+                      `uvm_fatal(this.get_name(), "Failed subdecode")
+                    end
                   end
                   ////////////////////////////////
                   // value
                   f68_value__field_number: begin
-                    assert (wire_type == pb_pkg::WIRE_TYPE_DELIMITED);
-                    assert (!pb_pkg::decode_type_string(._result(found_value), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length)));
+                    if (wire_type != pb_pkg::WIRE_TYPE_DELIMITED) begin
+                      `uvm_fatal(this.get_name(), "Unexpected wire_type")
+                    end
+                    if (pb_pkg::decode_type_string(._result(found_value), ._stream(_stream), ._cursor(_cursor), ._str_length(delimited_length))) begin
+                      `uvm_fatal(this.get_name(), "Failed subdecode")
+                    end
                   end
-                  default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));
+                  default : begin
+                    if (pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length))) begin
+                      `uvm_fatal(this.get_name(), "Failed decode_and_consume_unknown")
+                    end
+                  end
                 endcase
               end
               f68[found_key] = found_value;
           end
-          default : assert (!pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length)));
+          default : begin
+            if (pb_pkg::decode_and_consume_unknown(._wire_type(wire_type), ._stream(_stream), ._cursor(_cursor), ._delimited_length(delimited_length))) begin
+              `uvm_fatal(this.get_name(), "Failed decode_and_consume_unknown")
+            end
+          end
         endcase
         if (wire_type == pb_pkg::WIRE_TYPE_DELIMITED) begin
-          assert (_cursor == delimited_stop) else $display("_cursor: %0d delimited_stop: %0d", _cursor, delimited_stop);
+          if (_cursor != delimited_stop) begin
+            `uvm_fatal(this.get_name(), "cursor didn't stop at exactly delimited_stop")
+          end
+        end
+        if (_cursor == cursor_orig) begin
+          `uvm_error(this.get_name(), $sformatf("Deserialize loop didn't advance cursor starting at position %0d. Stream follows:\n%p", _cursor, _stream))
+          break;
         end
       end
       if (!this.is_initialized()) begin
