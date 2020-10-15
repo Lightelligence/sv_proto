@@ -1,4 +1,6 @@
 # -*- mode: python -*-
+workspace(name = "sv_proto")
+
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
@@ -14,7 +16,7 @@ protobuf_deps()
 
 git_repository(
     name = "verilog_tools",
-    path = "../verilog_tools",
+    # path = "../verilog_tools",
     tag = "v0.0.5",
     remote = "git@ssh.dev.azure.com:v3/LightelligencePlatform/verilog_tools/verilog_tools",
 )
