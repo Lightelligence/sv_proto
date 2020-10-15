@@ -294,7 +294,13 @@ class SVFieldDescriptorProto():
         elif self.type in [self.TYPE_STRING]:
             lines.append(f"  printer.print_string({var_name}, {var});")
         elif self.type in [self.TYPE_BYTES]:
-            lines.append(f"  printer.print_generic({var_name}, \"bytes\", {var}.size(), $sformatf(\"%p\", {var}));")
+            lines.append(f"  if ({var}.size() < 1024) begin")
+            lines.append(f"    printer.print_generic({var_name}, \"bytes\", {var}.size(), $sformatf(\"%p\", {var}));")
+            lines.append(f"  end else begin")
+            # Avoid Cadence warnings about %p only being able to print 4096 characters
+            # FIXME ideally, this would just display the first 1024 bytes or some reasonable value
+            lines.append(f"    printer.print_generic({var_name}, \"bytes\", {var}.size(), \"TOO Large to Display\");")
+            lines.append(f"  end")
         elif self.type in [self.TYPE_FLOAT, self.TYPE_DOUBLE]:
             lines.append(f"  printer.print_real({var_name}, {var});")
         else:
