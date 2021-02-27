@@ -14,12 +14,12 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
-git_repository(
-    name = "verilog_tools",
-    # path = "../verilog_tools",
-    tag = "v0.0.5",
-    remote = "git@ssh.dev.azure.com:v3/LightelligencePlatform/verilog_tools/verilog_tools",
+http_archive(
+    name = "rules_verilog",
+    urls = ["https://github.com/Lightelligence/rules_verilog/archive/v0.0.0.tar.gz"],
+    sha256 = "ab64a872410d22accb383c7ffc6d42e90f4de40a7cd92f43f4c26471c4f14908",
+    strip_prefix = "rules_verilog-0.0.0",
 )
 
-load("@verilog_tools//:simulator.bzl", "xcelium_setup")
+load("@rules_verilog//:simulator.bzl", "xcelium_setup")
 xcelium_setup(name="xcelium")
