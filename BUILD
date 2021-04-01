@@ -1,4 +1,4 @@
-load("@rules_tools//verilog:defs.bzl", "verilog_dv_library")
+load("@rules_verilog//verilog:defs.bzl", "verilog_dv_library")
 
 py_binary(
     name = "sv_plugin",
