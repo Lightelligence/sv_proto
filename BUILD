@@ -1,4 +1,4 @@
-load("@verilog_tools//:dv.bzl", "dv_lib")
+load("@rules_verilog//verilog:defs.bzl", "verilog_dv_library")
 
 py_binary(
     name = "sv_plugin",
@@ -15,7 +15,7 @@ cc_binary(
     linkshared=True,
 )
 
-dv_lib(
+verilog_dv_library(
     name = "pb",
     srcs = [
         "pb_pkg.svh",

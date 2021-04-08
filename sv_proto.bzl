@@ -1,4 +1,4 @@
-load("@verilog_tools//:dv.bzl", "dv_lib")
+load("@rules_verilog//verilog:defs.bzl", "verilog_dv_library")
 
 def sv_proto_library(name, srcs):
     """Generate a SystemVerilog file from a .proto file.
@@ -32,7 +32,7 @@ def sv_proto_library(name, srcs):
     #     gen_py = False,
     # )
 
-    dv_lib(
+    verilog_dv_library(
         name = name,
         srcs = [":{}_sv".format(name)],
         deps = ["@sv_proto//:pb"],

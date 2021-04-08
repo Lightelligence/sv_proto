@@ -1,5 +1,5 @@
 load("//:sv_proto.bzl", "sv_proto_library")
-load("@verilog_tools//:dv.bzl", "dv_unit_test")
+load("@rules_verilog//verilog:defs.bzl", "verilog_dv_unit_test")
 
 def golden_test(name):
     """Compares a generated file to a statically checked in file."""
@@ -21,7 +21,7 @@ def golden_test(name):
         tags = ["gold"],
     )
 
-    dv_unit_test(
+    verilog_dv_unit_test(
         name = "{}_compile_test".format(name),
         deps = [
             ":{}".format(name),
