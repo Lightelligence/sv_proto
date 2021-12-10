@@ -50,16 +50,34 @@ extern "C" void socket_close(int socket_id) {
 
 extern "C" int socket_write_bytes(int socket_id, const svOpenArrayHandle h) {
   check_array_handle_dimensions(h);
-  unsigned int data_size = svSize(h, 1);
+  unsigned int bytes_expected = svSize(h, 1);
   unsigned char* raw_array = (unsigned char*)svGetArrayPtr(h);
-  write(socket_id, raw_array, data_size);
+  while (bytes_expected > 0) {
+    int bytes_written = write(socket_id, raw_array, bytes_expected);
+    if (bytes_written <= 0 || bytes_written > bytes_expected) {
+      cout << "ERROR: bytes_written=" << bytes_written
+           << ", bytes_expected=" << bytes_expected << endl;
+      return 1;
+    }
+    raw_array += bytes_written;
+    bytes_expected -= bytes_written;
+  }
   return 0;
 }
 
 extern "C" int socket_read_bytes(int socket_id, svOpenArrayHandle h) {
   check_array_handle_dimensions(h);
-  unsigned int data_size = svSize(h, 1);
+  unsigned int bytes_expected = svSize(h, 1);
   unsigned char* raw_array = (unsigned char*)svGetArrayPtr(h);
-  read(socket_id, raw_array, data_size);
+  while (bytes_expected > 0) {
+    int bytes_read = read(socket_id, raw_array, bytes_expected);
+    if (bytes_read <= 0 || bytes_read > bytes_expected) {
+      cout << "ERROR: bytes_read=" << bytes_read
+           << ", bytes_expected=" << bytes_expected << endl;
+      return 1;
+    }
+    raw_array += bytes_read;
+    bytes_expected -= bytes_read;
+  }
   return 0;
 }
