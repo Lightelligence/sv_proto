@@ -9,9 +9,9 @@
   `define __PB_SOCKET_SVH__
 
 import "DPI" socket_initialize  = function int _socket_initialize(input string socket_name, output int _socket_id);
+import "DPI" socket_read_bytes  = function int _socket_read_bytes (input int _socket_id, output byte _stream[]);
+import "DPI" socket_write_bytes = function int _socket_write_bytes(input int _socket_id, input  byte _stream[]);
 import "DPI" socket_close       = function void _socket_close(input int _socket_id);
-import "DPI" socket_write_bytes = function void _socket_write_bytes(input int _socket_id, input  byte _stream[]);
-import "DPI" socket_read_bytes  = task _socket_read_bytes (input int _socket_id, output byte _stream[]);
 
 class socket_c extends uvm_object;
 
@@ -51,8 +51,12 @@ class socket_c extends uvm_object;
       `uvm_fatal("socket", "Attempting to tx_serialized_message before initialization")
     end
     stream_size = {<<8{_stream.size()}};
-    _socket_write_bytes(this.socket_id, stream_size);
-    _socket_write_bytes(this.socket_id, _stream);
+    if (_socket_write_bytes(this.socket_id, stream_size)) begin
+      `uvm_fatal("socket", "socket_write_bytes failed: payload size")
+    end
+    if (_socket_write_bytes(this.socket_id, _stream)) begin
+      `uvm_fatal("socket", "socket_write_bytes failed: payload size")
+    end
   endfunction : tx_serialized_message
 
   virtual task rx_serialized_message(ref bytestream_t _stream);
@@ -61,10 +65,14 @@ class socket_c extends uvm_object;
     if (!this.is_initialized) begin
       `uvm_fatal("socket", "Attempting to rx_serialized_message before initialization")
     end
-    _socket_read_bytes(this.socket_id, payload_size_buf);
+    if (_socket_read_bytes(this.socket_id, payload_size_buf)) begin
+      `uvm_fatal("socket", "socket_write_bytes failed: payload size")
+    end
     payload_size = {<<8{payload_size_buf}};
     _stream = new[payload_size];
-    _socket_read_bytes(this.socket_id, _stream);
+    if (_socket_read_bytes(this.socket_id, _stream)) begin
+      `uvm_fatal("socket", "socket_write_bytes failed: payload size")
+    end
   endtask : rx_serialized_message
 
 endclass : socket_c      
