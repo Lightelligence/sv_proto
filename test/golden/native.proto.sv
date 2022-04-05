@@ -2510,11 +2510,23 @@ end
       printer.print_object($sformatf("%0d", xx), this.f61[xx]);
     end
     printer.print_array_footer(this.f61.size());
-      printer.print_generic("f62", "bytes", this.f62.size(), $sformatf("%p", this.f62));
-      printer.print_generic("f63", "bytes", this.f63.size(), $sformatf("%p", this.f63));
+      if (this.f62.size() < 1024) begin
+        printer.print_generic("f62", "bytes", this.f62.size(), $sformatf("%p", this.f62));
+      end else begin
+        printer.print_generic("f62", "bytes", this.f62.size(), "TOO Large to Display");
+      end
+      if (this.f63.size() < 1024) begin
+        printer.print_generic("f63", "bytes", this.f63.size(), $sformatf("%p", this.f63));
+      end else begin
+        printer.print_generic("f63", "bytes", this.f63.size(), "TOO Large to Display");
+      end
     printer.print_array_header("this.f64", this.f64.size());
     foreach(this.f64[xx]) begin
-      printer.print_generic($sformatf("%0d", xx), "bytes", this.f64[xx].size(), $sformatf("%p", this.f64[xx]));
+      if (this.f64[xx].size() < 1024) begin
+        printer.print_generic($sformatf("%0d", xx), "bytes", this.f64[xx].size(), $sformatf("%p", this.f64[xx]));
+      end else begin
+        printer.print_generic($sformatf("%0d", xx), "bytes", this.f64[xx].size(), "TOO Large to Display");
+      end
     end
     printer.print_array_footer(this.f64.size());
     printer.print_array_header("this.f65", this.f65.size());
